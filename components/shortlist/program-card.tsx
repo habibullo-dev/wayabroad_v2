@@ -6,9 +6,26 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { formatUsd } from "@/lib/format";
 import type { ProgramMatch } from "@/lib/matching/shortlist";
+import type { ProbabilityResult } from "@/lib/probability/score";
+import { cn } from "@/lib/utils";
 
-export function ProgramCard({ match }: { match: ProgramMatch }) {
-  const { program, university, estAnnualCostUsd, reasons } = match;
+const CONF_VARIANT: Record<
+  ProbabilityResult["confidence"],
+  "success" | "warning" | "muted"
+> = {
+  high: "success",
+  moderate: "warning",
+  low: "muted",
+};
+
+export function ProgramCard({
+  match,
+  probability,
+}: {
+  match: ProgramMatch;
+  probability?: ProbabilityResult;
+}) {
+  const { program, university, estAnnualCostUsd } = match;
 
   return (
     <Card className="flex flex-col gap-4 p-5">
@@ -21,6 +38,36 @@ export function ProgramCard({ match }: { match: ProgramMatch }) {
             {university.name} · {program.degree_level}
           </p>
         </div>
+        {probability ? (
+          <div className="shrink-0 text-right">
+            <p
+              className={cn(
+                "font-display text-2xl font-semibold tabular-nums leading-none",
+                probability.eligible ? "text-primary" : "text-muted-foreground",
+              )}
+            >
+              {probability.percent}%
+            </p>
+            <p className="mt-1 text-[11px] uppercase tracking-wide text-muted-foreground">
+              admission odds
+            </p>
+          </div>
+        ) : (
+          <MatchBadge level={match.level} score={match.score} />
+        )}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        {probability && (
+          <>
+            <Badge variant={CONF_VARIANT[probability.confidence]}>
+              {probability.confidence} confidence
+            </Badge>
+            <span className="text-xs tabular-nums text-muted-foreground">
+              range {probability.band[0]}–{probability.band[1]}%
+            </span>
+          </>
+        )}
         <MatchBadge level={match.level} score={match.score} />
       </div>
 
@@ -38,16 +85,6 @@ export function ProgramCard({ match }: { match: ProgramMatch }) {
           <span>{program.language_of_instruction}-taught</span>
         )}
       </div>
-
-      {reasons.length > 0 && (
-        <ul className="flex flex-wrap gap-1.5">
-          {reasons.map((r) => (
-            <li key={r}>
-              <Badge variant="outline">{r}</Badge>
-            </li>
-          ))}
-        </ul>
-      )}
 
       <div className="mt-auto flex items-end justify-between gap-3 border-t pt-4">
         <div>

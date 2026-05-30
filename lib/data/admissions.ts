@@ -27,6 +27,33 @@ export async function getAdmissionRecords(
   }
 }
 
+/** Admission records for many programs at once, grouped by program_id. */
+export async function getAdmissionRecordsByProgram(
+  programIds: number[],
+): Promise<Map<number, AdmissionRecord[]>> {
+  const grouped = new Map<number, AdmissionRecord[]>();
+  if (MOCK_DATA || programIds.length === 0) return grouped;
+  try {
+    const supabase = createPublicClient();
+    const { data, error } = await supabase
+      .from("admission_records")
+      .select("*")
+      .in("program_id", programIds);
+    if (error) throw error;
+    for (const row of data ?? []) {
+      const list = grouped.get(row.program_id) ?? [];
+      list.push(row);
+      grouped.set(row.program_id, list);
+    }
+    return grouped;
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error("[data] getAdmissionRecordsByProgram failed.", error);
+    captureException(error, { where: "getAdmissionRecordsByProgram" });
+    return grouped;
+  }
+}
+
 /** A program + its university by program id. null if not found. */
 export async function getProgramWithUniversity(
   programId: number,

@@ -9,6 +9,13 @@ import { getCurrentUser } from "@/lib/auth/user";
 import { getPrograms, getUniversities } from "@/lib/data/universities";
 import { rankPrograms, type MatchProfile } from "@/lib/matching/shortlist";
 import { normalizeGpaTo4 } from "@/lib/profile/constants";
+import { getAdmissionRecordsByProgram } from "@/lib/data/admissions";
+import {
+  toAdmissionRecords,
+  toProgramInfo,
+  toStudentProfile,
+} from "@/lib/probability/adapter";
+import { scoreAdmission } from "@/lib/probability/score";
 import { createServerSupabase } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Your shortlist" };
@@ -54,6 +61,17 @@ export default async function ShortlistPage() {
   const matches = rankPrograms(profile, progs.data, byId);
   const isLive = unis.source === "live" && progs.source === "live";
 
+  // Admission-probability per shortlisted program (blends synthetic admission_records).
+  const recordsByProgram = await getAdmissionRecordsByProgram(
+    matches.map((m) => m.program.id),
+  );
+  const studentProfile = toStudentProfile({
+    gpa: student.gpa,
+    gpaScale: student.gpa_scale ?? 4,
+    languageTest: student.language_test,
+    languageScore: student.language_score,
+  });
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
       <header className="mb-2 flex flex-wrap items-end justify-between gap-3">
@@ -91,7 +109,15 @@ export default async function ShortlistPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {matches.map((m) => (
-            <ProgramCard key={m.program.id} match={m} />
+            <ProgramCard
+              key={m.program.id}
+              match={m}
+              probability={scoreAdmission(
+                studentProfile,
+                toProgramInfo(m.program, m.university),
+                toAdmissionRecords(recordsByProgram.get(m.program.id) ?? []),
+              )}
+            />
           ))}
         </div>
       )}
