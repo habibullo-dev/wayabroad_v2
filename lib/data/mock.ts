@@ -38,6 +38,7 @@ function uni(
     scholarship_note: null,
     data_confidence: "sample",
     verify_before_launch: true,
+    verified: null,
     created_at: null,
     ...p,
   };

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { getUniversityDetail } from "@/lib/data/universities";
+import { fieldTrust, getVerified } from "@/lib/data/verified";
 
 type Params = { params: { slug: string } };
 
@@ -22,6 +23,17 @@ export default async function UniversityPage({ params }: Params) {
 
   const { university, programs } = detail.data;
   const isLive = detail.source === "live";
+  const verified = getVerified(university);
+  // Gate by status: only an official scholarships note overrides the seed as fact; a
+  // non-official one is shown as an estimate; pending/absent falls back to the seed note.
+  const vs = verified?.scholarships ?? null;
+  const vsTrust = vs?.text ? fieldTrust(vs.status) : "none";
+  const useVerifiedScholarships = vsTrust !== "none";
+  const scholarships = useVerifiedScholarships
+    ? vs!.text
+    : university.scholarship_note;
+  const scholarshipSource = useVerifiedScholarships ? vs!.source_url : null;
+  const scholarshipsOfficial = vsTrust === "verified";
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
@@ -104,14 +116,32 @@ export default async function UniversityPage({ params }: Params) {
             )}
           </ul>
 
-          {university.scholarship_note && (
+          {scholarships && (
             <Card className="mt-4 p-5">
               <h3 className="font-display text-base font-semibold">
                 Scholarships
               </h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                {university.scholarship_note}
+                {scholarships}
               </p>
+              {useVerifiedScholarships && !scholarshipsOfficial && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Estimate — confirm current programs with the university.
+                </p>
+              )}
+              {scholarshipSource && (
+                <a
+                  href={scholarshipSource}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-flex items-center gap-0.5 text-xs text-primary underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  {scholarshipsOfficial
+                    ? "Official scholarships page"
+                    : "Source"}
+                  <ExternalLink className="size-3" aria-hidden />
+                </a>
+              )}
             </Card>
           )}
         </section>
