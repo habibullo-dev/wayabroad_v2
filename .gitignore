@@ -43,9 +43,6 @@ pnpm-debug.log*
 .vercel
 .sentryclirc
 
-# --- prisma generated client ---
-/prisma/generated
-
 # --- unrelated heavy course materials (kept on disk, not version-controlled) ---
 # Ignore everything in coursework except its explanatory README.
 /docs/coursework/*

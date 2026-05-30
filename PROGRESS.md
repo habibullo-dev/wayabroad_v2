@@ -7,7 +7,7 @@ Running log of milestone status, decisions, and open questions. Source of truth 
 | Milestone | Status | Notes |
 |---|---|---|
 | **M0 — Scaffold** | ✅ Done | Next.js 14 + TS + Tailwind + shadcn, tooling, observability stubs, green local verify + CI workflow |
-| **M1 — Data layer** | ✅ Done | Migrations applied to live Supabase (RLS on all 6 tables), 50/267/2938 seeded, supabase-js typed client + data layer w/ mock fallback, Prisma schema mirror |
+| **M1 — Data layer** | ✅ Done | Migrations applied to live Supabase (RLS on all 6 tables), 50/267/2938 seeded, supabase-js typed client + data layer w/ mock fallback |
 | M2 — Profile + Assistant | ⬜ Not started | Auth, onboarding, ranked shortlist + cost breakdown |
 | M3 — Probability Engine v1 | ⬜ Not started | Explainable score + confidence band + drivers; no-login free check |
 | M4 — Document Generator | ⬜ Not started | Claude SOP/Study Plan drafts, editor, version history, export |
@@ -31,7 +31,8 @@ Legend: ⬜ not started · 🟡 in progress · ✅ done · ⚠️ blocked
 - **2026-05-30** — _Decided_ (not yet built): the probability engine will be a pure TypeScript module in-app for the MVP, not a Python service (matches plan §3 and the locked stack). Interface to be kept swappable for a Phase-2 model. Implementation lands in M3.
 - **2026-05-30** — Pinned Next.js 14 / Tailwind v3 / shadcn stable rather than the Next 15 / Tailwind v4 bleeding edge, to honor the locked stack.
 - **2026-05-30 (M1)** — Owner connected the Supabase MCP + provisioned env, then authorized "Apply via MCP". Migrations applied to the **live** Supabase project (`wayabroad`), superseding the earlier code-only "don't touch the live DB" guardrail.
-- **2026-05-30 (M1)** — App's working typed client = **supabase-js + generated `database.types.ts`** (RLS-aware, idiomatic for Supabase+RLS). **Prisma** is delivered as the schema-as-code mirror; client generation is deferred until `DATABASE_URL`/`DIRECT_URL` are set (then `prisma db pull` + `generate`). Both are valid "typed clients" per the brief.
+- **2026-05-30 (M1)** — App's working typed client = **supabase-js + generated `database.types.ts`** (RLS-aware, idiomatic for Supabase+RLS).
+- **2026-05-30 (post-M1)** — **Dropped Prisma entirely** (owner directive: "no prisma, we use supabase for now"). Removed `prisma/schema.prisma` and the `DATABASE_URL`/`DIRECT_URL` env vars; supabase-js + generated types is the sole data client going forward.
 - **2026-05-30 (M1)** — Data layer returns `{ data, source: "live" | "mock" }`; mock fallback when not-configured / empty / query-failed, with **loud logging** on the configured-but-failed path so a real misconfig can't hide.
 - **2026-05-30 (M1)** — RLS: reference tables are **public-read with no write policies** (writes only via service role); `students`/`applications`/`documents` are **strict own-data** via `(select auth.uid())`. `database/schema.sql` mirrored verbatim for reference tables.
 
@@ -39,7 +40,6 @@ Legend: ⬜ not started · 🟡 in progress · ✅ done · ⚠️ blocked
 
 - Confirm whether to set up a GitHub remote + Vercel project when ready (currently local-only, no push).
 - Resend (email) is stubbed for M5 — confirm whether real sends are wanted for the demo.
-- `DATABASE_URL` / `DIRECT_URL` are not set, so Prisma is schema-only for now (supabase-js covers M1). Add them (Supabase → Settings → Database) to activate Prisma at runtime.
 - Security advisor flags a **pre-existing** `public.rls_auto_enable()` SECURITY DEFINER function (not created by us) as anon/authenticated-executable. Decide whether to harden it (revoke EXECUTE or switch to SECURITY INVOKER). Not touched — it isn't ours.
 - PostHog key not set (host is) — funnel events no-op until M3 wiring + key.
 
@@ -63,6 +63,6 @@ _(One short paragraph per review — accepted vs. rejected issues and why.)_
   reference tables are public-read-only. _Accepted:_ (Medium) the data layer now distinguishes
   not-configured / empty / query-failed and logs the failure path **loudly** instead of silently
   masking a misconfig; (Low) Prisma UUID PKs use `dbgenerated("gen_random_uuid()")` to mirror the
-  SQL exactly; (Low) the seed comment no longer overstates convergence and logs the target host.
+  SQL exactly (now moot — Prisma was removed post-M1); (Low) the seed comment no longer overstates convergence and logs the target host.
   _Rejected:_ adding `server-only` to `lib/data/mock.ts` — it's pure, secret-free sample data
   meant to be importable anywhere; the secret-bearing modules are already guarded.

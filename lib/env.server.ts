@@ -11,8 +11,6 @@ import { isPresent } from "@/lib/env";
  */
 const serverEnvSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
-  DATABASE_URL: z.string().optional(),
-  DIRECT_URL: z.string().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),
   SENTRY_DSN: z.string().optional(),
   RESEND_API_KEY: z.string().optional(),
@@ -30,7 +28,6 @@ if (!parsed.success && process.env.NODE_ENV !== "production") {
 
 export const serverEnv = parsed.success ? parsed.data : {};
 
-export const IS_DATABASE_CONFIGURED = isPresent(serverEnv.DATABASE_URL);
 export const IS_SERVICE_ROLE_CONFIGURED = isPresent(
   serverEnv.SUPABASE_SERVICE_ROLE_KEY,
 );

@@ -25,7 +25,7 @@ A brand-new visitor can, on a live URL, in under five minutes:
 |---|---|
 | Framework | Next.js 14 (App Router) + TypeScript (strict) |
 | UI | Tailwind CSS v3 + shadcn/ui |
-| Data | Supabase (Postgres, Auth, Storage) + Prisma |
+| Data | Supabase (Postgres, Auth, Storage) — typed `supabase-js` client |
 | AI | Anthropic Claude API (structured output) |
 | Probability engine | Pure, unit-tested TypeScript module (Phase-2-swappable for a Python model) |
 | Observability | PostHog (funnel) + Sentry (errors) — no-op stubs until keys are set |
