@@ -1,8 +1,8 @@
 import { FileText, GraduationCap, Sparkles, Wallet } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { getReferenceCounts } from "@/lib/data/universities";
 import { APP_NAME, APP_TAGLINE } from "@/lib/config";
-import { MOCK_DATA } from "@/lib/env";
 
 const PILLARS = [
   {
@@ -27,13 +27,19 @@ const PILLARS = [
   },
 ] as const;
 
-export default function HomePage() {
+export default async function HomePage() {
+  const { data: counts, source } = await getReferenceCounts();
+  const dataLabel =
+    source === "live"
+      ? `${counts.universities} universities · ${counts.programs} programs (live)`
+      : "sample data";
+
   return (
     <main className="mx-auto flex min-h-screen max-w-5xl flex-col items-center justify-center gap-12 px-6 py-16 text-center">
       <div className="flex flex-col items-center gap-5">
         <span className="inline-flex items-center gap-2 rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
           <span className="size-2 rounded-full bg-primary" />
-          MVP scaffold (M0) · {MOCK_DATA ? "mock data" : "live data"}
+          M1 · data layer · {dataLabel}
         </span>
         <h1 className="max-w-3xl text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
           {APP_NAME}
