@@ -9,7 +9,7 @@ Running log of milestone status, decisions, and open questions. Source of truth 
 | **M0 — Scaffold** | ✅ Done | Next.js 14 + TS + Tailwind + shadcn, tooling, observability stubs, green local verify + CI workflow |
 | **M1 — Data layer** | ✅ Done | Migrations applied to live Supabase (RLS on all 6 tables), 50/267/2938 seeded, supabase-js typed client + data layer w/ mock fallback |
 | **M2 — Profile + Assistant** | ✅ Done | Design system, Supabase auth (email + Google), onboarding → students, ranked shortlist + matching engine, university detail + cost |
-| M3 — Probability Engine v1 | ⬜ Not started | Explainable score + confidence band + drivers; no-login free check |
+| M3 — Probability Engine v1 | ⬜ Not started | Explainable score + confidence band + drivers; no-login free check; **+ verified-DB overlay (provenance, gate-by-status)** |
 | M4 — Document Generator | ⬜ Not started | Claude SOP/Study Plan drafts, editor, version history, export |
 | M5 — Dashboard + status flow | ⬜ Not started | Mission tracker, checklist, simulated status, email stubs |
 | M6 — Polish + demo hardening | ⬜ Not started | Mobile QA, demo accounts, DEMO_SCRIPT.md |
@@ -33,6 +33,7 @@ Legend: ⬜ not started · 🟡 in progress · ✅ done · ⚠️ blocked
 - **2026-05-30 (M1)** — Owner connected the Supabase MCP + provisioned env, then authorized "Apply via MCP". Migrations applied to the **live** Supabase project (`wayabroad`), superseding the earlier code-only "don't touch the live DB" guardrail.
 - **2026-05-30 (M1)** — App's working typed client = **supabase-js + generated `database.types.ts`** (RLS-aware, idiomatic for Supabase+RLS).
 - **2026-05-30 (post-M1)** — **Dropped Prisma entirely** (owner directive: "no prisma, we use supabase for now"). Removed `prisma/schema.prisma` and the `DATABASE_URL`/`DIRECT_URL` env vars; supabase-js + generated types is the sole data client going forward.
+- **2026-05-30 (M2→M3)** — **Verified university DB integration deferred to M3** (owner choice). `verified-university-db/` has real per-field provenance (`{value, source_url, verified_on, status}`) but only **6/100 fully verified** (39 third-party, 51 pending). Swapping now would replace 50 fully-populated rows with mostly-pending ones — violating the methodology's "never show an unverified number as fact" rule. M3 will: add provenance columns, **overlay verified financials gated by status** (verified → fact + "verified on/source"; third-party → "estimate, confirm" chip; pending → keep labeled estimate), and pair it with the `probability-engine/` prototype.
 - **2026-05-30 (M1)** — Data layer returns `{ data, source: "live" | "mock" }`; mock fallback when not-configured / empty / query-failed, with **loud logging** on the configured-but-failed path so a real misconfig can't hide.
 - **2026-05-30 (M1)** — RLS: reference tables are **public-read with no write policies** (writes only via service role); `students`/`applications`/`documents` are **strict own-data** via `(select auth.uid())`. `database/schema.sql` mirrored verbatim for reference tables.
 
