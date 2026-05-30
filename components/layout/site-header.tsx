@@ -8,7 +8,7 @@ import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
 
 const NAV = [
-  { href: "/#features", label: "How it works" },
+  { href: "/check", label: "Free check" },
   { href: "/shortlist", label: "Shortlist" },
   { href: "/universities", label: "Universities" },
 ];

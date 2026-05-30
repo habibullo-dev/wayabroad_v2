@@ -73,17 +73,17 @@ export default async function HomePage() {
             </p>
             <div className="flex flex-wrap items-center justify-center gap-3">
               <Button asChild size="lg">
-                <Link href="/signup">
-                  Start free
+                <Link href="/check">
+                  Check my chances — free
                   <ArrowRight />
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline">
-                <Link href="#features">How it works</Link>
+                <Link href="/signup">Create account</Link>
               </Button>
             </div>
             <p className="text-sm text-muted-foreground">
-              No credit card. The free probability check arrives in M3.
+              No sign-up needed for the free probability check.
             </p>
           </div>
         </section>
