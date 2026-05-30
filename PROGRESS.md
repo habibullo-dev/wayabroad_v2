@@ -8,7 +8,7 @@ Running log of milestone status, decisions, and open questions. Source of truth 
 |---|---|---|
 | **M0 — Scaffold** | ✅ Done | Next.js 14 + TS + Tailwind + shadcn, tooling, observability stubs, green local verify + CI workflow |
 | **M1 — Data layer** | ✅ Done | Migrations applied to live Supabase (RLS on all 6 tables), 50/267/2938 seeded, supabase-js typed client + data layer w/ mock fallback |
-| M2 — Profile + Assistant | ⬜ Not started | Auth, onboarding, ranked shortlist + cost breakdown |
+| **M2 — Profile + Assistant** | 🟡 In progress | Design system (ui-ux-pro-max + frontend-design) + app shell ✅; auth / onboarding / shortlist / cost next |
 | M3 — Probability Engine v1 | ⬜ Not started | Explainable score + confidence band + drivers; no-login free check |
 | M4 — Document Generator | ⬜ Not started | Claude SOP/Study Plan drafts, editor, version history, export |
 | M5 — Dashboard + status flow | ⬜ Not started | Mission tracker, checklist, simulated status, email stubs |
@@ -66,3 +66,8 @@ _(One short paragraph per review — accepted vs. rejected issues and why.)_
   SQL exactly (now moot — Prisma was removed post-M1); (Low) the seed comment no longer overstates convergence and logs the target host.
   _Rejected:_ adding `server-only` to `lib/data/mock.ts` — it's pure, secret-free sample data
   meant to be importable anywhere; the secret-bearing modules are already guarded.
+- **M2 (design foundation) — Codex a11y/contrast pass, accepted all.** Retuned `success`/`warning`
+  tokens for AA contrast (dark-mode warning badge; white-on-emerald solid); added focus rings to
+  footer + mobile-nav links; `input` → `h-11` + `text-base md:text-sm` (touch + no iOS focus-zoom);
+  the data badge now names live/sample state (no color-only meaning); `aria-controls` on the menu
+  toggle. RSC/client boundaries and semantic-token usage confirmed clean.

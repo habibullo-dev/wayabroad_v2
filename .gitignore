@@ -47,3 +47,6 @@ pnpm-debug.log*
 # Ignore everything in coursework except its explanatory README.
 /docs/coursework/*
 !/docs/coursework/README.md
+/verified-university-db
+# --- playwright / local screenshot artifacts ---
+.playwright-mcp/

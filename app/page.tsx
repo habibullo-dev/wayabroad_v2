@@ -1,8 +1,19 @@
-import { FileText, GraduationCap, Sparkles, Wallet } from "lucide-react";
+import Link from "next/link";
+import {
+  ArrowRight,
+  FileText,
+  GraduationCap,
+  Sparkles,
+  Wallet,
+} from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { SiteFooter } from "@/components/layout/site-footer";
+import { SiteHeader } from "@/components/layout/site-header";
 import { getReferenceCounts } from "@/lib/data/universities";
-import { APP_NAME, APP_TAGLINE } from "@/lib/config";
+import { cn } from "@/lib/utils";
 
 const PILLARS = [
   {
@@ -13,7 +24,7 @@ const PILLARS = [
   {
     icon: Sparkles,
     title: "Admission probability",
-    body: "A transparent % chance per program — with the factors and a confidence band.",
+    body: "A transparent % chance per program — with its drivers and a confidence band.",
   },
   {
     icon: FileText,
@@ -31,52 +42,68 @@ export default async function HomePage() {
   const { data: counts, source } = await getReferenceCounts();
   const dataLabel =
     source === "live"
-      ? `${counts.universities} universities · ${counts.programs} programs (live)`
-      : "sample data";
+      ? `${counts.universities} universities · ${counts.programs} programs`
+      : "Sample data";
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-5xl flex-col items-center justify-center gap-12 px-6 py-16 text-center">
-      <div className="flex flex-col items-center gap-5">
-        <span className="inline-flex items-center gap-2 rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
-          <span className="size-2 rounded-full bg-primary" />
-          M1 · data layer · {dataLabel}
-        </span>
-        <h1 className="max-w-3xl text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
-          {APP_NAME}
-          <span className="block text-2xl font-normal text-muted-foreground sm:text-3xl">
-            {APP_TAGLINE}
-          </span>
-        </h1>
-        <p className="max-w-xl text-pretty text-base text-muted-foreground">
-          The full landing page and free probability check arrive in M3. This is
-          the design-system foundation rendering with mocked data — no database
-          or API keys required.
-        </p>
-        <div className="flex flex-col items-center gap-3 pt-2">
-          <Button size="lg" asChild>
-            <a href="#features">See what&rsquo;s coming</a>
-          </Button>
-          <p className="text-sm text-muted-foreground">
-            Sign-in and the free probability check go live in M3.
-          </p>
-        </div>
-      </div>
+    <div className="flex min-h-screen flex-col">
+      <SiteHeader />
 
-      <ul
-        id="features"
-        className="grid w-full grid-cols-1 gap-4 text-left sm:grid-cols-2"
-      >
-        {PILLARS.map(({ icon: Icon, title, body }) => (
-          <li
-            key={title}
-            className="flex flex-col gap-2 rounded-lg border border-border bg-card p-5"
-          >
-            <Icon className="size-5 text-primary" aria-hidden />
-            <h2 className="text-sm font-semibold">{title}</h2>
-            <p className="text-sm text-muted-foreground">{body}</p>
-          </li>
-        ))}
-      </ul>
-    </main>
+      <main className="flex-1">
+        <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-28">
+          <div className="mx-auto flex max-w-3xl flex-col items-center gap-6 text-center">
+            <Badge variant={source === "live" ? "success" : "warning"}>
+              <span
+                aria-hidden
+                className={cn(
+                  "size-1.5 rounded-full",
+                  source === "live" ? "bg-success" : "bg-warning",
+                )}
+              />
+              {source === "live" ? `Live data · ${dataLabel}` : dataLabel}
+            </Badge>
+            <h1 className="font-display text-4xl font-semibold leading-[1.05] sm:text-6xl">
+              Get into a Korean university with{" "}
+              <span className="text-primary">confidence</span>.
+            </h1>
+            <p className="max-w-xl text-pretty text-lg text-muted-foreground">
+              WayAbroad turns your profile into a ranked shortlist, a
+              transparent admission-probability score, and ready-to-edit
+              application drafts — built on real Korean university data.
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <Button asChild size="lg">
+                <Link href="/signup">
+                  Start free
+                  <ArrowRight />
+                </Link>
+              </Button>
+              <Button asChild size="lg" variant="outline">
+                <Link href="#features">How it works</Link>
+              </Button>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              No credit card. The free probability check arrives in M3.
+            </p>
+          </div>
+        </section>
+
+        <section id="features" className="mx-auto max-w-6xl px-4 pb-24 sm:px-6">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {PILLARS.map(({ icon: Icon, title, body }) => (
+              <Card key={title} className="flex flex-col gap-3 p-6">
+                <span className="grid size-10 place-items-center rounded-lg bg-secondary text-primary">
+                  <Icon className="size-5" aria-hidden />
+                </span>
+                <h2 className="text-base font-semibold">{title}</h2>
+                <p className="text-sm text-muted-foreground">{body}</p>
+              </Card>
+            ))}
+          </div>
+        </section>
+      </main>
+
+      <SiteFooter />
+    </div>
   );
 }
