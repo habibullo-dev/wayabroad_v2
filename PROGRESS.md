@@ -8,7 +8,7 @@ Running log of milestone status, decisions, and open questions. Source of truth 
 |---|---|---|
 | **M0 — Scaffold** | ✅ Done | Next.js 14 + TS + Tailwind + shadcn, tooling, observability stubs, green local verify + CI workflow |
 | **M1 — Data layer** | ✅ Done | Migrations applied to live Supabase (RLS on all 6 tables), 50/267/2938 seeded, supabase-js typed client + data layer w/ mock fallback |
-| **M2 — Profile + Assistant** | 🟡 In progress | Design system (ui-ux-pro-max + frontend-design) + app shell ✅; auth / onboarding / shortlist / cost next |
+| **M2 — Profile + Assistant** | ✅ Done | Design system, Supabase auth (email + Google), onboarding → students, ranked shortlist + matching engine, university detail + cost |
 | M3 — Probability Engine v1 | ⬜ Not started | Explainable score + confidence band + drivers; no-login free check |
 | M4 — Document Generator | ⬜ Not started | Claude SOP/Study Plan drafts, editor, version history, export |
 | M5 — Dashboard + status flow | ⬜ Not started | Mission tracker, checklist, simulated status, email stubs |
@@ -71,3 +71,14 @@ _(One short paragraph per review — accepted vs. rejected issues and why.)_
   footer + mobile-nav links; `input` → `h-11` + `text-base md:text-sm` (touch + no iOS focus-zoom);
   the data badge now names live/sample state (no color-only meaning); `aria-controls` on the menu
   toggle. RSC/client boundaries and semantic-token usage confirmed clean.
+- **M2 (auth) — Codex security pass.** Confirmed the @supabase/ssr cookie/session pattern, RSC
+  cookie-write handling, `getUser` (not `getSession`) for header state, and the service-role
+  secret boundary are all correct. Fixed: **open redirect** in the OAuth callback `next` param
+  (High); generic login error (no account-existence disclosure) + zod validation (Low ×2).
+- **M2 (assistant) — Codex pass on matching/profile/data.** Confirmed own-row RLS posture is
+  correct. Accepted all: per-test **language-score validation** (High — unbounded scores were
+  faking perfect matches), grad-vs-UG tuition source, **hard degree filter** (honest counts),
+  React `cache()` to dedupe the detail double-fetch, loud programs-query error, and
+  `aria-describedby` hint association. Added cost-fallback + hard-filter unit tests (12 total).
+- **Note:** bumped `@supabase/ssr` 0.5→0.7 (0.5/0.6 bundled an older supabase-js whose generics
+  made the typed `students` upsert resolve to `never`).
