@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Menu, X } from "lucide-react";
+import { LogOut, Menu, X } from "lucide-react";
 
 import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
@@ -13,9 +13,16 @@ const NAV = [
   { href: "/universities", label: "Universities" },
 ];
 
-/** Marketing/app top nav: sticky, subtle glass. Auth-aware actions land with M2 auth. */
-export function SiteHeader() {
+export function SiteHeader({
+  userEmail,
+  signOutAction,
+}: {
+  userEmail?: string | null;
+  signOutAction?: () => Promise<void>;
+}) {
   const [open, setOpen] = useState(false);
+  const authed = Boolean(userEmail);
+  const initial = userEmail?.[0]?.toUpperCase() ?? "?";
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-md">
@@ -39,14 +46,38 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        <div className="hidden items-center gap-2 md:flex">
-          <Button asChild variant="ghost" size="sm">
-            <Link href="/login">Sign in</Link>
-          </Button>
-          <Button asChild size="sm">
-            <Link href="/signup">Get started</Link>
-          </Button>
-        </div>
+        {authed ? (
+          <div className="hidden items-center gap-3 md:flex">
+            <span className="flex items-center gap-2">
+              <span
+                aria-hidden
+                className="grid size-8 place-items-center rounded-full bg-secondary text-xs font-semibold text-primary"
+              >
+                {initial}
+              </span>
+              <span className="max-w-[11rem] truncate text-sm text-muted-foreground">
+                {userEmail}
+              </span>
+            </span>
+            {signOutAction && (
+              <form action={signOutAction}>
+                <Button type="submit" variant="ghost" size="sm">
+                  <LogOut className="size-4" />
+                  Sign out
+                </Button>
+              </form>
+            )}
+          </div>
+        ) : (
+          <div className="hidden items-center gap-2 md:flex">
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/login">Sign in</Link>
+            </Button>
+            <Button asChild size="sm">
+              <Link href="/signup">Get started</Link>
+            </Button>
+          </div>
+        )}
 
         <button
           type="button"
@@ -80,12 +111,38 @@ export function SiteHeader() {
               </Link>
             ))}
             <div className="mt-2 flex flex-col gap-2">
-              <Button asChild variant="outline" onClick={() => setOpen(false)}>
-                <Link href="/login">Sign in</Link>
-              </Button>
-              <Button asChild onClick={() => setOpen(false)}>
-                <Link href="/signup">Get started</Link>
-              </Button>
+              {authed ? (
+                <>
+                  <span className="px-3 text-sm text-muted-foreground">
+                    Signed in as {userEmail}
+                  </span>
+                  {signOutAction && (
+                    <form action={signOutAction}>
+                      <Button
+                        type="submit"
+                        variant="outline"
+                        className="w-full"
+                      >
+                        <LogOut className="size-4" />
+                        Sign out
+                      </Button>
+                    </form>
+                  )}
+                </>
+              ) : (
+                <>
+                  <Button
+                    asChild
+                    variant="outline"
+                    onClick={() => setOpen(false)}
+                  >
+                    <Link href="/login">Sign in</Link>
+                  </Button>
+                  <Button asChild onClick={() => setOpen(false)}>
+                    <Link href="/signup">Get started</Link>
+                  </Button>
+                </>
+              )}
             </div>
           </nav>
         </div>

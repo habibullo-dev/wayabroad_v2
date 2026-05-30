@@ -1,6 +1,8 @@
 import "server-only";
 
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
+import { cookies } from "next/headers";
 
 import type { Database } from "@/lib/db/database.types";
 import { publicEnv } from "@/lib/env";
@@ -36,5 +38,38 @@ export function createServiceClient() {
   }
   return createClient<Database>(url, key, {
     auth: { persistSession: false },
+  });
+}
+
+/**
+ * Cookie-bound server client (anon key) that carries the signed-in user's session, so RLS
+ * applies. Use in Server Components, Server Actions, and Route Handlers for user-scoped data.
+ * Cookie writes are no-ops during a Server Component render (middleware refreshes them).
+ */
+export function createServerSupabase() {
+  const url = publicEnv.NEXT_PUBLIC_SUPABASE_URL;
+  const anon = publicEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !anon) {
+    throw new Error("Supabase public env (URL + anon key) is not configured.");
+  }
+  const cookieStore = cookies();
+  return createServerClient<Database>(url, anon, {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll();
+      },
+      setAll(
+        cookiesToSet: { name: string; value: string; options: CookieOptions }[],
+      ) {
+        try {
+          for (const { name, value, options } of cookiesToSet) {
+            cookieStore.set(name, value, options);
+          }
+        } catch {
+          // Called from a Server Component render — safe to ignore; the middleware
+          // refreshes the session cookies on the next request.
+        }
+      },
+    },
   });
 }

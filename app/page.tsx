@@ -10,8 +10,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { AppHeader } from "@/components/layout/app-header";
 import { SiteFooter } from "@/components/layout/site-footer";
-import { SiteHeader } from "@/components/layout/site-header";
 import { getReferenceCounts } from "@/lib/data/universities";
 import { cn } from "@/lib/utils";
 
@@ -47,7 +47,7 @@ export default async function HomePage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <SiteHeader />
+      <AppHeader />
 
       <main className="flex-1">
         <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-28">
