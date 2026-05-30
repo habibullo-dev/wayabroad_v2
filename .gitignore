@@ -47,6 +47,7 @@ pnpm-debug.log*
 # Ignore everything in coursework except its explanatory README.
 /docs/coursework/*
 !/docs/coursework/README.md
-/verified-university-db
+# M3-prep verified DB + raw research pulls (owner playground; integrated into the app in M3).
+/files
 # --- playwright / local screenshot artifacts ---
 .playwright-mcp/

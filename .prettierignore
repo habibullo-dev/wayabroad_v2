@@ -8,5 +8,5 @@ pnpm-lock.yaml
 database
 docs
 probability-engine
-verified-university-db
+files
 *.md
