@@ -6,7 +6,7 @@ Running log of milestone status, decisions, and open questions. Source of truth 
 
 | Milestone | Status | Notes |
 |---|---|---|
-| **M0 — Scaffold** | 🟡 In progress | Next.js 14 + TS + Tailwind + shadcn, tooling, observability stubs, CI |
+| **M0 — Scaffold** | ✅ Done | Next.js 14 + TS + Tailwind + shadcn, tooling, observability stubs, green local verify + CI workflow |
 | M1 — Data layer | ⬜ Not started | Prisma schema, migrations, typed client, seed script, mock fallback |
 | M2 — Profile + Assistant | ⬜ Not started | Auth, onboarding, ranked shortlist + cost breakdown |
 | M3 — Probability Engine v1 | ⬜ Not started | Explainable score + confidence band + drivers; no-login free check |
@@ -40,4 +40,14 @@ Legend: ⬜ not started · 🟡 in progress · ✅ done · ⚠️ blocked
 
 _(One short paragraph per review — accepted vs. rejected issues and why.)_
 
-- _M0: pending._
+- **M0 — two Codex passes, all findings accepted, none rejected.** _Review #1 (hygiene/secrets):_
+  broadened the env ignore to `.env*` + `!.env.example`, broadened the coursework ignore,
+  ignored `.claude/settings.local.json`, reworded PROGRESS to separate decisions from done
+  work, and deferred `README.md` until the scaffold existed so it wasn't misleading.
+  _Review #2 (scaffold):_ made `lib/env.ts` parse per-field with `.catch` so one bad value no
+  longer silently flips `MOCK_DATA`; set `metadataBase` from `APP_URL`; made the PostHog stub
+  warn when a key is set but the SDK isn't wired yet; trimmed whitespace in every
+  `IS_*_CONFIGURED` check; corrected the README's test-coverage wording; and replaced the
+  placeholder's disabled CTA buttons with an accessible link + status text. Independently
+  verified no server-secret names appear in `.next/static` and that `env.server` is never
+  imported client-side.

@@ -1,0 +1,6 @@
+# pnpm reads build-script approvals from here.
+# esbuild is Vitest's transpiler and needs its install script.
+# unrs-resolver is declined (we dropped vite-tsconfig-paths in favor of a plain alias).
+allowBuilds:
+  esbuild: true
+  unrs-resolver: false
