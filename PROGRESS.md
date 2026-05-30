@@ -10,7 +10,7 @@ Running log of milestone status, decisions, and open questions. Source of truth 
 | **M1 — Data layer** | ✅ Done | Migrations applied to live Supabase (RLS on all 6 tables), 50/267/2938 seeded, supabase-js typed client + data layer w/ mock fallback |
 | **M2 — Profile + Assistant** | ✅ Done | Design system, Supabase auth (email + Google), onboarding → students, ranked shortlist + matching engine, university detail + cost |
 | **M3 — Probability Engine v1** | 🟡 Core done | Engine (ported + tested) + no-login free check + shortlist odds + PostHog events ✅; **verified-DB overlay remaining** |
-| M4 — Document Generator | ⬜ Not started | Claude SOP/Study Plan drafts, editor, version history, export |
+| **M4 — Document Generator** | ✅ Done | Claude SOP/Study Plan drafts (Sonnet 4.6), apply→application→editor, version history, .docx/.md/PDF export, draft-aid labels |
 | M5 — Dashboard + status flow | ⬜ Not started | Mission tracker, checklist, simulated status, email stubs |
 | M6 — Polish + demo hardening | ⬜ Not started | Mobile QA, demo accounts, DEMO_SCRIPT.md |
 
@@ -90,3 +90,10 @@ _(One short paragraph per review — accepted vs. rejected issues and why.)_
   → treated as unconfirmed (High), headline de-emphasized when ineligible, ARIA live-region for the
   async result, university-lookup error capture. Engine ported faithfully from the owner's
   `probability-engine/` prototype; 9 engine tests (21 total).
+- **M4 (document generator) — Codex Claude-integration + RLS pass.** Confirmed no IDOR, RLS
+  correctly scopes applications/documents to the user, `ANTHROPIC_API_KEY` stays server-side,
+  typed error handling, mock clearly labeled. Fixed: **retry-on-unique-conflict** for document
+  versions (High) and applications (Medium) backed by new unique indexes; **prompt-injection
+  framing** of profile values as untrusted data (Medium); docx export error/disabled state +
+  textarea `maxLength` (Low). Generation verified against the live API (grounded SOP with
+  `[bracketed]` placeholders, no fabricated facts).
