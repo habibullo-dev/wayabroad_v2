@@ -11,7 +11,7 @@ Running log of milestone status, decisions, and open questions. Source of truth 
 | **M2 — Profile + Assistant** | ✅ Done | Design system, Supabase auth (email + Google), onboarding → students, ranked shortlist + matching engine, university detail + cost |
 | **M3 — Probability Engine v1** | 🟡 Core done | Engine (ported + tested) + no-login free check + shortlist odds + PostHog events ✅; **verified-DB overlay remaining** |
 | **M4 — Document Generator** | ✅ Done | Claude SOP/Study Plan drafts (Sonnet 4.6), apply→application→editor, version history, .docx/.md/PDF export, draft-aid labels |
-| M5 — Dashboard + status flow | ⬜ Not started | Mission tracker, checklist, simulated status, email stubs |
+| **M5 — Dashboard + status flow** | ✅ Done | Mission-tracker `/dashboard` (journey checklist + profile + per-app timeline), 5-stage status timeline, submit + simulated admin advance (compare-and-set), Resend email stub, auth-aware nav + post-login → /dashboard |
 | M6 — Polish + demo hardening | ⬜ Not started | Mobile QA, demo accounts, DEMO_SCRIPT.md |
 
 Legend: ⬜ not started · 🟡 in progress · ✅ done · ⚠️ blocked
@@ -35,12 +35,15 @@ Legend: ⬜ not started · 🟡 in progress · ✅ done · ⚠️ blocked
 - **2026-05-30 (post-M1)** — **Dropped Prisma entirely** (owner directive: "no prisma, we use supabase for now"). Removed `prisma/schema.prisma` and the `DATABASE_URL`/`DIRECT_URL` env vars; supabase-js + generated types is the sole data client going forward.
 - **2026-05-30 (M2→M3)** — **Verified university DB integration deferred to M3** (owner choice). `verified-university-db/` has real per-field provenance (`{value, source_url, verified_on, status}`) but only **6/100 fully verified** (39 third-party, 51 pending). Swapping now would replace 50 fully-populated rows with mostly-pending ones — violating the methodology's "never show an unverified number as fact" rule. M3 will: add provenance columns, **overlay verified financials gated by status** (verified → fact + "verified on/source"; third-party → "estimate, confirm" chip; pending → keep labeled estimate), and pair it with the `probability-engine/` prototype.
 - **2026-05-30 (M1)** — Data layer returns `{ data, source: "live" | "mock" }`; mock fallback when not-configured / empty / query-failed, with **loud logging** on the configured-but-failed path so a real misconfig can't hide.
+- **2026-05-30 (M5)** — Status flow is a **5-stage server-side state machine** (draft → submitted → under_review → interview → decision). The student submits; everything past that is a **clearly-labeled simulated admin step** for the demo (plan §5: "fake the plumbing"). Transitions are **compare-and-set** (`update … .eq("status", from)`) so a direct POST can neither regress status nor overshoot `decision`, and concurrent transitions are safe. `advanceApplicationStatus` computes the next stage **server-side** (never trusts a posted target).
+- **2026-05-30 (M5)** — Nav is **auth-aware**: signed-in → Dashboard/Shortlist/Applications/Universities; signed-out → Free check/Universities (keeps the no-login funnel prominent). Post-login lands on **/dashboard** (the mission-tracker hub); onboarding still → /shortlist.
+- **2026-05-30 (M5)** — Email notifications kept as a **stub** (`lib/email/notifications.ts`): logs in dev, no real send. `RESEND_API_KEY` is set but deliberately **not wired** to avoid surprise sends during the demo — call sites already pass everything needed to enable it later. (See open question.)
 - **2026-05-30 (M1)** — RLS: reference tables are **public-read with no write policies** (writes only via service role); `students`/`applications`/`documents` are **strict own-data** via `(select auth.uid())`. `database/schema.sql` mirrored verbatim for reference tables.
 
 ## Open questions
 
 - Confirm whether to set up a GitHub remote + Vercel project when ready (currently local-only, no push).
-- Resend (email) is stubbed for M5 — confirm whether real sends are wanted for the demo.
+- Resend (email) is stubbed (`lib/email/notifications.ts`) — confirm whether real sends are wanted for the demo before wiring the API call.
 - Security advisor flags a **pre-existing** `public.rls_auto_enable()` SECURITY DEFINER function (not created by us) as anon/authenticated-executable. Decide whether to harden it (revoke EXECUTE or switch to SECURITY INVOKER). Not touched — it isn't ours.
 - PostHog key not set (host is) — funnel events no-op until M3 wiring + key.
 
@@ -97,3 +100,12 @@ _(One short paragraph per review — accepted vs. rejected issues and why.)_
   framing** of profile values as untrusted data (Medium); docx export error/disabled state +
   textarea `maxLength` (Low). Generation verified against the live API (grounded SOP with
   `[bracketed]` placeholders, no fabricated facts).
+- **M5 (dashboard + status flow) — Codex state-machine/RLS pass, both findings accepted.**
+  Confirmed no IDOR (actions read/write through the user-scoped client; `advanceApplicationStatus`
+  computes the next stage server-side rather than trusting a posted target). Fixed: (High)
+  `submitApplication` could be POSTed directly with any owned application's id to **regress** an
+  `under_review`/`interview`/`decision` row back to `submitted` — now a **compare-and-set** that
+  only fires from `draft`; (Medium) a stale/concurrent `advance` could write a previously-computed
+  target and regress status — the update now compares against the `from` status read in the same
+  action (`update … .eq("student_id", user.id).eq("status", from)`), so a precondition-failed
+  transition is a safe no-op. `transition` returns early when nothing changed (no misleading email).

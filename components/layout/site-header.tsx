@@ -7,10 +7,15 @@ import { LogOut, Menu, X } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
 
-const NAV = [
-  { href: "/check", label: "Free check" },
+const AUTHED_NAV = [
+  { href: "/dashboard", label: "Dashboard" },
   { href: "/shortlist", label: "Shortlist" },
   { href: "/applications", label: "Applications" },
+  { href: "/universities", label: "Universities" },
+];
+
+const GUEST_NAV = [
+  { href: "/check", label: "Free check" },
   { href: "/universities", label: "Universities" },
 ];
 
@@ -24,6 +29,7 @@ export function SiteHeader({
   const [open, setOpen] = useState(false);
   const authed = Boolean(userEmail);
   const initial = userEmail?.[0]?.toUpperCase() ?? "?";
+  const NAV = authed ? AUTHED_NAV : GUEST_NAV;
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-md">

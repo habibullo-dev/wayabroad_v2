@@ -38,7 +38,7 @@ export async function signInWithEmail(
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
   // Generic message — don't disclose whether the account exists.
   if (error) return { error: "Invalid email or password. Please try again." };
-  redirect("/shortlist");
+  redirect("/dashboard");
 }
 
 export async function signUpWithEmail(

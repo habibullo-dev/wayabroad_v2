@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { StatusActions } from "@/components/applications/status-actions";
+import { StatusTimeline } from "@/components/applications/status-timeline";
 import { DocumentEditor } from "@/components/documents/document-editor";
-import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import { getApplicationWorkspace } from "@/lib/documents/data";
 import { DOC_TYPE_LABELS, DOC_TYPES } from "@/lib/documents/prompts";
 
@@ -30,20 +32,25 @@ export default async function ApplicationPage({ params }: Params) {
       </Link>
 
       <header className="mt-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="font-display text-3xl font-semibold tracking-tight">
-            {program.name}
-          </h1>
-          <Badge variant="secondary">
-            {application.status.replace("_", " ")}
-          </Badge>
-        </div>
+        <h1 className="font-display text-3xl font-semibold tracking-tight">
+          {program.name}
+        </h1>
         <p className="mt-1 text-muted-foreground">
           {university.name} · {program.degree_level}
         </p>
       </header>
 
-      <p className="mt-4 text-sm text-muted-foreground">
+      <Card className="mt-6 flex flex-col gap-5 p-6">
+        <StatusTimeline status={application.status} />
+        <div className="border-t border-border/60 pt-4">
+          <StatusActions
+            applicationId={application.id}
+            status={application.status}
+          />
+        </div>
+      </Card>
+
+      <p className="mt-8 text-sm text-muted-foreground">
         Generate first drafts from your profile, edit them freely, and download.
         These are editable aids — not finished or submittable documents.
       </p>
