@@ -1,5 +1,7 @@
 import "server-only";
 
+import { cache } from "react";
+
 import { MOCK_PROGRAMS, MOCK_UNIVERSITIES } from "@/lib/data/mock";
 import type { DataResult, Program, University } from "@/lib/data/types";
 import { MOCK_DATA } from "@/lib/env";
@@ -65,6 +67,71 @@ export function getPrograms(): Promise<DataResult<Program[]>> {
     supabase.from("programs").select("*"),
   );
 }
+
+function mockDetail(slug: string): DataResult<{
+  university: University;
+  programs: Program[];
+}> | null {
+  const university = MOCK_UNIVERSITIES.find((u) => u.slug === slug);
+  if (!university) return null;
+  return {
+    data: {
+      university,
+      programs: MOCK_PROGRAMS.filter((p) => p.university_id === university.id),
+    },
+    source: "mock",
+  };
+}
+
+/**
+ * A single university by slug with its programs. null if it doesn't exist anywhere.
+ * Wrapped in React `cache` so the page + generateMetadata share one DB round-trip.
+ */
+export const getUniversityDetail = cache(
+  async (
+    slug: string,
+  ): Promise<DataResult<{
+    university: University;
+    programs: Program[];
+  }> | null> => {
+    if (MOCK_DATA) return mockDetail(slug);
+    try {
+      const supabase = createPublicClient();
+      const { data: university, error } = await supabase
+        .from("universities")
+        .select("*")
+        .eq("slug", slug)
+        .maybeSingle();
+      if (error) throw error;
+      if (!university) return mockDetail(slug);
+
+      const { data: programs, error: programsError } = await supabase
+        .from("programs")
+        .select("*")
+        .eq("university_id", university.id)
+        .order("degree_level", { ascending: true });
+      if (programsError) {
+        // eslint-disable-next-line no-console
+        console.error(
+          `[data] getUniversityDetail(${slug}) programs query failed.`,
+          programsError,
+        );
+        captureException(programsError, {
+          where: "getUniversityDetail.programs",
+        });
+      }
+      return { data: { university, programs: programs ?? [] }, source: "live" };
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error(
+        `[data] getUniversityDetail(${slug}) failed; serving mock.`,
+        error,
+      );
+      captureException(error, { where: "getUniversityDetail" });
+      return mockDetail(slug);
+    }
+  },
+);
 
 /** Lightweight counts used by the landing page to prove the data layer end-to-end. */
 export async function getReferenceCounts(): Promise<
