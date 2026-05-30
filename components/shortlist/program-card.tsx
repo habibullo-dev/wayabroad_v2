@@ -1,9 +1,11 @@
 import Link from "next/link";
-import { ArrowRight, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
 
 import { MatchBadge } from "@/components/shortlist/match-badge";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { startApplication } from "@/lib/applications/actions";
 import { formatUsd } from "@/lib/format";
 import type { ProgramMatch } from "@/lib/matching/shortlist";
 import type { ProbabilityResult } from "@/lib/probability/score";
@@ -93,13 +95,20 @@ export function ProgramCard({
             {formatUsd(estAnnualCostUsd)}
           </p>
         </div>
-        <Link
-          href={`/universities/${university.slug}`}
-          className="inline-flex items-center gap-1 rounded-md text-sm font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-        >
-          Details
-          <ArrowRight className="size-4" aria-hidden />
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href={`/universities/${university.slug}`}
+            className="rounded-md text-sm font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            Details
+          </Link>
+          <form action={startApplication}>
+            <input type="hidden" name="programId" value={program.id} />
+            <Button type="submit" size="sm">
+              Apply
+            </Button>
+          </form>
+        </div>
       </div>
     </Card>
   );

@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 const NAV = [
   { href: "/check", label: "Free check" },
   { href: "/shortlist", label: "Shortlist" },
+  { href: "/applications", label: "Applications" },
   { href: "/universities", label: "Universities" },
 ];
 
