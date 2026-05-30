@@ -9,7 +9,7 @@ Running log of milestone status, decisions, and open questions. Source of truth 
 | **M0 — Scaffold** | ✅ Done | Next.js 14 + TS + Tailwind + shadcn, tooling, observability stubs, green local verify + CI workflow |
 | **M1 — Data layer** | ✅ Done | Migrations applied to live Supabase (RLS on all 6 tables), 50/267/2938 seeded, supabase-js typed client + data layer w/ mock fallback |
 | **M2 — Profile + Assistant** | ✅ Done | Design system, Supabase auth (email + Google), onboarding → students, ranked shortlist + matching engine, university detail + cost |
-| M3 — Probability Engine v1 | ⬜ Not started | Explainable score + confidence band + drivers; no-login free check; **+ verified-DB overlay (provenance, gate-by-status)** |
+| **M3 — Probability Engine v1** | 🟡 Core done | Engine (ported + tested) + no-login free check + shortlist odds + PostHog events ✅; **verified-DB overlay remaining** |
 | M4 — Document Generator | ⬜ Not started | Claude SOP/Study Plan drafts, editor, version history, export |
 | M5 — Dashboard + status flow | ⬜ Not started | Mission tracker, checklist, simulated status, email stubs |
 | M6 — Polish + demo hardening | ⬜ Not started | Mobile QA, demo accounts, DEMO_SCRIPT.md |
@@ -83,3 +83,10 @@ _(One short paragraph per review — accepted vs. rejected issues and why.)_
   `aria-describedby` hint association. Added cost-fallback + hard-filter unit tests (12 total).
 - **Note:** bumped `@supabase/ssr` 0.5→0.7 (0.5/0.6 bundled an older supabase-js whose generics
   made the typed `students` upsert resolve to `never`).
+- **M3 (engine + funnel) — Codex stats/security pass, all accepted.** Confirmed the free check
+  persists nothing, returns a serializable result, never shows a bare % (band+drivers+disclaimer),
+  and has clean RLS/secrets. Fixed: TOEFL requirement mapping (High), strict free-check validation
+  incl. per-test score bounds (High), **TOPIK no longer silently satisfies an English requirement**
+  → treated as unconfirmed (High), headline de-emphasized when ineligible, ARIA live-region for the
+  async result, university-lookup error capture. Engine ported faithfully from the owner's
+  `probability-engine/` prototype; 9 engine tests (21 total).
