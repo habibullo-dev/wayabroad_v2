@@ -1,0 +1,52 @@
+# --- dependencies ---
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+
+# --- next.js / build output ---
+/.next/
+/out/
+/build
+/dist
+next-env.d.ts
+
+# --- testing / coverage ---
+/coverage
+
+# --- environment & secrets (NEVER commit real values) ---
+# Ignore every env variant; the committed template is the sole exception.
+.env*
+!.env.example
+
+# --- os / editor cruft ---
+.DS_Store
+*.pem
+.Rhistory
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# --- local Claude Code settings (shared .claude/settings.json stays trackable) ---
+.claude/settings.local.json
+
+# --- logs ---
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# --- typescript ---
+*.tsbuildinfo
+
+# --- deploy / tooling ---
+.vercel
+.sentryclirc
+
+# --- prisma generated client ---
+/prisma/generated
+
+# --- unrelated heavy course materials (kept on disk, not version-controlled) ---
+# Ignore everything in coursework except its explanatory README.
+/docs/coursework/*
+!/docs/coursework/README.md
