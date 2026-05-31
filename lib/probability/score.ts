@@ -61,13 +61,15 @@ export interface ProbabilityResult {
   disclaimer: string;
 }
 
-// Rough prior admit-rate by selectivity tier — used ONLY when no real acceptance rate is known,
-// and always labeled as a rough estimate in the UI.
-const TIER_BASE: Record<TierBand, number> = {
-  elite: 0.3,
+// Baseline odds for an applicant who just MEETS the bar, by tier — calibrated for INTERNATIONAL
+// undergraduate admission, which is largely qualification-based and far less selective than the
+// domestic (수능) competition. NOT the overall/domestic acceptance rate. A strong GPA/language
+// margin pushes well above these; elite schools stay competitive even for strong profiles.
+const INTL_TIER_BASE: Record<TierBand, number> = {
+  elite: 0.35,
   strong: 0.5,
-  mid: 0.68,
-  regional: 0.82,
+  mid: 0.62,
+  regional: 0.74,
 };
 
 const clamp = (x: number, lo: number, hi: number) =>
@@ -169,33 +171,33 @@ export function scoreAdmission(
     detail: `Your GPA ${student.gpa.toFixed(2)} vs program minimum ${program.minGpa.toFixed(2)} (margin ${gpaMargin >= 0 ? "+" : ""}${gpaMargin.toFixed(2)}).`,
   });
 
-  // --- 3. Base rate: real cited acceptance rate, else a labeled rough tier prior ---
+  // --- 3. Base rate: a cited INTERNATIONAL acceptance rate if one truly exists, else a
+  // qualification-based intl tier baseline. The overall/domestic acceptance rate is NOT used —
+  // it reflects the 수능 competition, not the separate (far less selective) international track. ---
   const hasValidatedRate =
     baseRate != null && Number.isFinite(baseRate.rate) && baseRate.rate > 0;
   const base = hasValidatedRate
     ? clamp(baseRate!.rate, 0.02, 0.98)
-    : TIER_BASE[tier];
+    : INTL_TIER_BASE[tier];
   if (hasValidatedRate) {
     drivers.push({
       factor: "Program selectivity",
       impact: base <= 0.25 ? "negative" : base >= 0.6 ? "positive" : "neutral",
-      detail: `Based on ${baseRate!.international ? "the international " : "an "}acceptance rate of ~${Math.round(base * 100)}%${baseRate!.sourceUrl ? " (validated from a cited source)" : ""}.`,
+      detail: `Anchored to a cited international acceptance rate of ~${Math.round(base * 100)}%.`,
     });
   } else {
     drivers.push({
       factor: "Program selectivity",
-      impact:
+      impact: tier === "elite" ? "neutral" : "positive",
+      detail:
         tier === "elite"
-          ? "negative"
-          : tier === "regional"
-            ? "positive"
-            : "neutral",
-      detail: `${tier[0]!.toUpperCase() + tier.slice(1)}-tier program — rough baseline ~${Math.round(base * 100)}% (no published acceptance rate found; estimate only).`,
+          ? "Elite-tier program — competitive even for international applicants, but qualification-based: a strong record matters most."
+          : `${tier[0]!.toUpperCase() + tier.slice(1)}-tier program — international admission is largely qualification-based, so meeting the bar with a strong record is well-positioned.`,
     });
   }
 
-  // --- 4. Fit: move around the base rate by GPA margin + language strength ---
-  let fit = clamp(gpaMargin * 0.3, -0.35, 0.35);
+  // --- 4. Fit: a strong GPA + language margin pushes well above the meets-the-bar baseline ---
+  let fit = clamp(gpaMargin * 0.32, -0.4, 0.32);
   if (lang.met) {
     fit += clamp(
       lang.margin * (program.language === "Korean" ? 0.04 : 0.05),
@@ -212,12 +214,15 @@ export function scoreAdmission(
   if (gpaMargin < -0.3) posterior = Math.min(posterior * 0.5, 0.18);
   posterior = clamp(posterior, 0.03, 0.97);
 
-  // --- 5. Band + confidence reflect the BASIS, not fake sample size ---
+  // --- 5. Band, confidence, category ---
   const eligible = !lang.unknown && lang.met && gpaMargin >= -0.3;
-  let half = hasValidatedRate ? 8 : 12;
+  let half = eligible ? 9 : 12;
   if (lang.unknown) half += 6;
-  const confidence: ProbabilityResult["confidence"] =
-    hasValidatedRate && !lang.unknown ? "moderate" : "low";
+  // We have no per-applicant outcome data, so confidence never exceeds "moderate"; it reflects
+  // whether eligibility is confirmed (language on file + GPA at/above the bar).
+  const confidence: ProbabilityResult["confidence"] = eligible
+    ? "moderate"
+    : "low";
 
   const percent = Math.round(posterior * 100);
   const band: [number, number] = [
@@ -225,11 +230,12 @@ export function scoreAdmission(
     clamp(percent + half, 1, 99),
   ];
 
+  // Reach / Match / Safety for international admission: a strong qualified profile reads Safety.
   const category: Category = !eligible
     ? "reach"
-    : percent >= 55
+    : percent >= 70
       ? "safety"
-      : percent >= 30
+      : percent >= 45
         ? "match"
         : "reach";
 
@@ -243,10 +249,10 @@ export function scoreAdmission(
     languageConfirmed: !lang.unknown,
     drivers,
     disclaimer:
-      "A model estimate from the program's selectivity and your academic/language fit" +
+      "A qualification-based estimate of your international-admission chances — from the program's selectivity and how your GPA and language compare to its requirements" +
       (hasValidatedRate
-        ? ", anchored to a cited acceptance rate"
-        : " (no published acceptance rate was found, so the baseline is a rough tier estimate)") +
+        ? ", anchored to a cited international acceptance rate"
+        : "") +
       ". Not a prediction or an official decision — confirm requirements with the university.",
   };
 }

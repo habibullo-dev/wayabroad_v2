@@ -41,16 +41,21 @@ export function toProgramInfo(
  */
 export function toBaseRate(university: University): AcceptanceBaseRate | null {
   const acc = getVerified(university)?.acceptance;
-  // Require a citation — an uncited rate must not become a "validated_rate" basis.
-  if (!acc || !acc.source_url) return null;
-  const intl = acc.intl_rate_pct;
-  const overall = acc.rate_pct;
-  const pct = intl != null && intl > 0 ? intl : overall;
-  if (pct == null || pct <= 0) return null;
+  // Only a genuine, cited INTERNATIONAL acceptance rate may anchor the estimate. The overall
+  // rate reflects the domestic (수능) competition — the wrong population for an international
+  // applicant — so it is deliberately ignored; the engine uses its intl tier baseline instead.
+  if (
+    !acc ||
+    !acc.source_url ||
+    acc.intl_rate_pct == null ||
+    acc.intl_rate_pct <= 0
+  ) {
+    return null;
+  }
   return {
-    rate: pct / 100,
+    rate: acc.intl_rate_pct / 100,
     sourceUrl: acc.source_url,
-    international: intl != null && intl > 0,
+    international: true,
   };
 }
 

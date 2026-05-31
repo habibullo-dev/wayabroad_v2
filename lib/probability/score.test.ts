@@ -50,11 +50,11 @@ describe("scoreAdmission — shape & drivers", () => {
 describe("scoreAdmission — prior basis (no validated rate)", () => {
   it("scores a strong eligible applicant on the labeled tier prior", () => {
     const r = scoreAdmission(strong, eliteCs);
-    // base 0.30 (elite prior) + gpaMargin 0.2*0.30 + IELTS margin 1.0*0.05 = 0.41
-    expect(r.percent).toBe(41);
+    // base 0.35 (elite intl baseline) + gpaMargin 0.2*0.32 + IELTS margin 1.0*0.05 ≈ 0.46
+    expect(r.percent).toBe(46);
     expect(r.basis).toBe("prior");
     expect(r.eligible).toBe(true);
-    expect(r.confidence).toBe("low");
+    expect(r.confidence).toBe("moderate");
     expect(r.category).toBe("match");
   });
 
@@ -110,8 +110,8 @@ describe("scoreAdmission — no usable language test", () => {
     );
     expect(r.languageConfirmed).toBe(false);
     expect(r.eligible).toBe(false);
-    // base 0.30 + gpa 0.06, no language gate → 36%
-    expect(r.percent).toBe(36);
+    // base 0.35 + gpa 0.064, no language gate → 41%
+    expect(r.percent).toBe(41);
     expect(
       r.drivers.find((d) => d.factor === "Language proficiency")?.impact,
     ).toBe("neutral");
@@ -124,6 +124,6 @@ describe("scoreAdmission — no usable language test", () => {
     );
     expect(r.languageConfirmed).toBe(false);
     expect(r.eligible).toBe(false);
-    expect(r.percent).toBe(36); // prior + gpa, NOT hard-gated
+    expect(r.percent).toBe(41); // intl prior + gpa, NOT hard-gated
   });
 });
