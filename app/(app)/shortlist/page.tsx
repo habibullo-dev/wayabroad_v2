@@ -6,15 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { getCurrentUser } from "@/lib/auth/user";
-import { getPrograms, getUniversities } from "@/lib/data/universities";
-import { rankPrograms, type MatchProfile } from "@/lib/matching/shortlist";
-import { normalizeGpaTo4 } from "@/lib/profile/constants";
-import {
-  toBaseRate,
-  toProgramInfo,
-  toStudentProfile,
-} from "@/lib/probability/adapter";
-import { scoreAdmission } from "@/lib/probability/score";
+import { getRankedMatches } from "@/lib/matching/ranked";
 import { createServerSupabase } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Your matches" };
@@ -33,7 +25,7 @@ export default async function ShortlistPage() {
       <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6">
         <Card className="flex flex-col items-center gap-4 p-10 text-center">
           <h1 className="font-display text-2xl font-semibold">
-            Let&rsquo;s build your shortlist
+            Let&rsquo;s find your matches
           </h1>
           <p className="text-muted-foreground">
             Complete your profile and we&rsquo;ll rank matching Korean programs
@@ -47,27 +39,7 @@ export default async function ShortlistPage() {
     );
   }
 
-  const [unis, progs] = await Promise.all([getUniversities(), getPrograms()]);
-  const byId = new Map(unis.data.map((u) => [u.id, u]));
-  const profile: MatchProfile = {
-    gpa4: normalizeGpaTo4(student.gpa, student.gpa_scale),
-    languageTest: student.language_test,
-    languageScore: student.language_score,
-    budgetUsd: student.budget_usd,
-    field: student.intended_field,
-    degree: student.intended_degree,
-  };
-  const matches = rankPrograms(profile, progs.data, byId);
-  const isLive = unis.source === "live" && progs.source === "live";
-
-  // Admission-probability per shortlisted program, anchored to a validated acceptance rate
-  // (from the data validator) when available, else a labeled tier prior.
-  const studentProfile = toStudentProfile({
-    gpa: student.gpa,
-    gpaScale: student.gpa_scale ?? 4,
-    languageTest: student.language_test,
-    languageScore: student.language_score,
-  });
+  const { matches, isLive } = await getRankedMatches(student);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
@@ -107,13 +79,9 @@ export default async function ShortlistPage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {matches.map((m) => (
             <ProgramCard
-              key={m.program.id}
-              match={m}
-              probability={scoreAdmission(
-                studentProfile,
-                toProgramInfo(m.program, m.university),
-                toBaseRate(m.university),
-              )}
+              key={m.match.program.id}
+              match={m.match}
+              probability={m.probability}
             />
           ))}
         </div>

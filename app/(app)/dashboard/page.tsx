@@ -3,10 +3,12 @@ import Link from "next/link";
 import { Check, Circle, GraduationCap } from "lucide-react";
 
 import { ApplicationCard } from "@/components/applications/application-card";
+import { ProgramCard } from "@/components/shortlist/program-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { getDashboard } from "@/lib/dashboard/data";
+import { getRankedMatches } from "@/lib/matching/ranked";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Your dashboard" };
@@ -20,6 +22,11 @@ export default async function DashboardPage() {
     hasDocuments,
     hasSubmitted,
   } = await getDashboard();
+
+  const { matches: topMatches } =
+    profileComplete && student
+      ? await getRankedMatches(student, { limit: 3 })
+      : { matches: [] };
 
   const firstName = student?.full_name?.trim().split(/\s+/)[0];
 
@@ -189,6 +196,27 @@ export default async function DashboardPage() {
           )}
         </Card>
       </div>
+
+      {/* Top matches preview */}
+      {topMatches.length > 0 && (
+        <section className="mt-8">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="font-display text-xl font-semibold">Top matches</h2>
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/shortlist">See all matches</Link>
+            </Button>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {topMatches.map((m) => (
+              <ProgramCard
+                key={m.match.program.id}
+                match={m.match}
+                probability={m.probability}
+              />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Applications */}
       <section className="mt-8">
