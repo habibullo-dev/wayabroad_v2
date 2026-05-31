@@ -2,7 +2,7 @@ import { BadgeCheck, ExternalLink, Info } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { COST_ESTIMATE_NOTE } from "@/lib/config";
+import { COST_ESTIMATE_NOTE, KRW_PER_USD } from "@/lib/config";
 import type { University } from "@/lib/data/types";
 import { fieldTrust, getVerified, type TrustLevel } from "@/lib/data/verified";
 import { formatKrw, formatUsd } from "@/lib/format";
@@ -56,12 +56,22 @@ export function CostBreakdown({ university }: { university: University }) {
   const tuitionYear = useVerifiedTuition ? vt!.usd_per_year : estTuitionYear;
   const tuitionIsWaiver = useVerifiedTuition && tuitionYear === 0;
 
-  const dormYear =
-    university.dorm_usd_per_semester != null
+  // Dorm + living prefer a validated overlay figure (with its source); else the seed columns.
+  const vd = verified?.dorm ?? null;
+  const useVd =
+    !!vd && fieldTrust(vd.status) !== "none" && vd.krw_per_semester != null;
+  const dormYear = useVd
+    ? Math.round((vd!.krw_per_semester! * 2) / KRW_PER_USD)
+    : university.dorm_usd_per_semester != null
       ? university.dorm_usd_per_semester * 2
       : null;
-  const livingYear =
-    university.living_usd_per_month != null
+
+  const vl = verified?.living ?? null;
+  const useVl =
+    !!vl && fieldTrust(vl.status) !== "none" && vl.usd_per_month != null;
+  const livingYear = useVl
+    ? vl!.usd_per_month! * 12
+    : university.living_usd_per_month != null
       ? university.living_usd_per_month * 12
       : null;
 
@@ -82,10 +92,28 @@ export function CostBreakdown({ university }: { university: University }) {
   const yearlyTotal = sum([tuitionYear, dormYear, livingYear]);
 
   const otherRows = [
-    { label: "Dorm", note: "on-campus, per year", value: dormYear },
-    { label: "Living", note: "food, transport, etc.", value: livingYear },
-    { label: "Visa", note: "D-2, one-time", value: university.visa_cost_usd },
+    {
+      label: "Dorm",
+      note: "on-campus, per year",
+      value: dormYear,
+      source: useVd ? vd!.source_url : null,
+    },
+    {
+      label: "Living",
+      note: "food, transport, etc.",
+      value: livingYear,
+      source: useVl ? vl!.source_url : null,
+    },
+    {
+      label: "Visa",
+      note: "D-2, one-time",
+      value: university.visa_cost_usd,
+      source: null,
+    },
   ];
+
+  // Any AI-validated overlay figures on this card? (drives the footnote)
+  const aiValidated = verified?.validated_via != null;
 
   return (
     <Card className="p-6">
@@ -131,17 +159,29 @@ export function CostBreakdown({ university }: { university: University }) {
         </div>
 
         {otherRows.map((row) => (
-          <div
-            key={row.label}
-            className="flex items-baseline justify-between gap-4 py-2.5"
-          >
-            <dt className="text-sm">
-              <span className="font-medium">{row.label}</span>{" "}
-              <span className="text-xs text-muted-foreground">{row.note}</span>
-            </dt>
-            <dd className="font-display text-base font-semibold tabular-nums">
-              {formatUsd(row.value)}
-            </dd>
+          <div key={row.label} className="flex flex-col gap-1 py-2.5">
+            <div className="flex items-baseline justify-between gap-4">
+              <dt className="text-sm">
+                <span className="font-medium">{row.label}</span>{" "}
+                <span className="text-xs text-muted-foreground">
+                  {row.note}
+                </span>
+              </dt>
+              <dd className="font-display text-base font-semibold tabular-nums">
+                {formatUsd(row.value)}
+              </dd>
+            </div>
+            {row.source && (
+              <a
+                href={row.source}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex w-fit items-center gap-0.5 text-xs text-primary underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                source
+                <ExternalLink className="size-3" aria-hidden />
+              </a>
+            )}
           </div>
         ))}
 
@@ -165,6 +205,14 @@ export function CostBreakdown({ university }: { university: University }) {
           {shownTrust === "estimate"
             ? "Tuition is a multi-source estimate — confirm the current figure with the university. Dorm, living and visa are estimates too."
             : COST_ESTIMATE_NOTE}
+        </p>
+      )}
+
+      {aiValidated && (
+        <p className="mt-2 text-xs text-muted-foreground">
+          Some figures were validated via web search
+          {verified?.validated_on ? ` on ${verified.validated_on}` : ""} — shown
+          as estimates with their sources; always confirm with the university.
         </p>
       )}
     </Card>
