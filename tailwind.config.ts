@@ -66,6 +66,10 @@ const config: Config = {
           DEFAULT: "hsl(var(--brand-accent))",
           foreground: "hsl(var(--brand-accent-foreground))",
         },
+        ink: {
+          DEFAULT: "hsl(var(--ink))",
+          foreground: "hsl(var(--ink-foreground))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

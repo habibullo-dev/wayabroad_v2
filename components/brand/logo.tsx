@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-/** WayAbroad wordmark: an indigo "W" tile with a persimmon "destination" dot. */
+/** WayAbroad wordmark: a royal-blue "W" tile with a sky-blue "destination" dot. */
 export function Logo({
   className,
   showWordmark = true,

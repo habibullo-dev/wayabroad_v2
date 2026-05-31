@@ -3,85 +3,92 @@
 @tailwind utilities;
 
 /*
- * WayAbroad design tokens — "editorial academic".
- * Indigo brand + persimmon accent on warm paper; emerald/amber/rose for functional
- * semantics (match, verify, destructive). All color flows through these semantic CSS
- * variables — never hardcode hex in components.
+ * WayAbroad design tokens — "premium business".
+ * Crisp white surfaces, deep-navy ink, a confident royal-blue brand + a sky-blue pop;
+ * emerald/amber/rose for functional semantics (match, verify, destructive). High-contrast,
+ * refined. All color flows through these semantic CSS variables — never hardcode hex.
  */
 @layer base {
   :root {
-    --background: 40 33% 98%; /* warm paper */
-    --foreground: 240 24% 12%; /* ink */
+    --background: 213 40% 99%; /* cool near-white */
+    --foreground: 222 47% 11%; /* deep navy ink */
 
     --card: 0 0% 100%;
-    --card-foreground: 240 24% 12%;
+    --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 24% 12%;
+    --popover-foreground: 222 47% 11%;
 
-    --primary: 244 55% 44%; /* deep indigo */
+    --primary: 221 83% 53%; /* royal blue */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 244 30% 95%;
-    --secondary-foreground: 244 44% 30%;
+    --secondary: 214 100% 97%; /* light blue tint */
+    --secondary-foreground: 222 47% 30%;
 
-    --muted: 40 20% 94%;
-    --muted-foreground: 240 8% 42%;
+    --muted: 214 28% 95%;
+    --muted-foreground: 215 18% 42%;
 
-    --accent: 244 30% 95%; /* subtle indigo hover surface */
-    --accent-foreground: 244 44% 30%;
+    --accent: 214 100% 97%; /* subtle blue hover surface */
+    --accent-foreground: 222 47% 30%;
 
-    --destructive: 350 70% 50%;
+    --destructive: 350 72% 50%;
     --destructive-foreground: 0 0% 100%;
 
     /* functional / brand extras */
-    --brand-accent: 13 85% 60%; /* persimmon */
+    --brand-accent: 199 92% 32%; /* deep azure — AA as text/badge on white & tint; use text-sky-400 for the light pop on dark (ink) bands */
     --brand-accent-foreground: 0 0% 100%;
-    --success: 158 70% 32%; /* emerald — high match (white text passes on solid) */
+    --success: 158 64% 28%; /* emerald — AA as text on white & success/10–/15 tints; white text passes on solid */
     --success-foreground: 0 0% 100%;
-    --warning: 36 92% 45%; /* amber — fills, dots, bars */
-    --warning-foreground: 30 60% 24%; /* dark amber — readable as text on a warning tint */
+    --warning: 32 95% 44%; /* amber — fills, dots, bars */
+    --warning-foreground: 28 70% 24%; /* dark amber — readable as text on a warning tint */
 
-    --border: 40 15% 87%;
-    --input: 40 15% 84%;
-    --ring: 244 55% 44%;
+    /* deep-navy ink surface for full-bleed CTA bands / footer */
+    --ink: 222 47% 11%;
+    --ink-foreground: 210 40% 98%;
 
-    --radius: 0.625rem;
+    --border: 214 22% 90%;
+    --input: 214 22% 86%;
+    --ring: 221 83% 53%;
+
+    --radius: 0.75rem;
   }
 
   .dark {
-    --background: 244 30% 8%;
-    --foreground: 40 20% 92%;
+    --background: 222 47% 7%; /* deep navy */
+    --foreground: 210 36% 96%;
 
-    --card: 244 28% 11%;
-    --card-foreground: 40 20% 92%;
-    --popover: 244 28% 11%;
-    --popover-foreground: 40 20% 92%;
+    --card: 222 44% 11%;
+    --card-foreground: 210 36% 96%;
+    --popover: 222 44% 11%;
+    --popover-foreground: 210 36% 96%;
 
-    --primary: 245 72% 70%;
-    --primary-foreground: 244 45% 12%;
+    --primary: 217 91% 62%; /* brighter blue on dark */
+    --primary-foreground: 222 47% 11%;
 
-    --secondary: 244 20% 18%;
-    --secondary-foreground: 40 20% 92%;
+    --secondary: 222 30% 18%;
+    --secondary-foreground: 210 36% 96%;
 
-    --muted: 244 18% 16%;
-    --muted-foreground: 240 10% 62%;
+    --muted: 222 28% 16%;
+    --muted-foreground: 215 20% 64%;
 
-    --accent: 244 20% 18%;
-    --accent-foreground: 40 20% 92%;
+    --accent: 222 30% 18%;
+    --accent-foreground: 210 36% 96%;
 
-    --destructive: 350 65% 58%;
+    --destructive: 350 70% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --brand-accent: 13 85% 65%;
-    --brand-accent-foreground: 244 45% 12%;
-    --success: 158 55% 50%;
-    --success-foreground: 244 45% 10%;
-    --warning: 36 90% 58%;
-    --warning-foreground: 38 95% 80%; /* light amber — readable as text on a warning tint (dark) */
+    --brand-accent: 199 90% 56%;
+    --brand-accent-foreground: 222 47% 11%;
+    --success: 158 58% 50%;
+    --success-foreground: 222 47% 9%;
+    --warning: 36 92% 60%;
+    --warning-foreground: 38 95% 82%;
 
-    --border: 244 16% 22%;
-    --input: 244 16% 24%;
-    --ring: 245 72% 70%;
+    --ink: 222 44% 13%;
+    --ink-foreground: 210 36% 96%;
+
+    --border: 222 24% 22%;
+    --input: 222 24% 24%;
+    --ring: 217 91% 62%;
   }
 }
 
@@ -113,23 +120,64 @@
 }
 
 /*
- * Atmosphere: a very subtle warm-to-paper top glow so the background isn't a flat slab.
- * Kept low-contrast and decorative-only (no impact on legibility / reduced-motion safe).
+ * Atmosphere: a soft cool-blue top glow so the white background reads as crafted depth, not a
+ * flat slab. Low-contrast, decorative-only (no impact on legibility / reduced-motion safe).
  */
 @layer base {
   body {
     background-image:
       radial-gradient(
-        60rem 40rem at 50% -10rem,
-        hsl(var(--primary) / 0.06),
+        60rem 40rem at 50% -12rem,
+        hsl(var(--primary) / 0.1),
         transparent 70%
       ),
       radial-gradient(
         40rem 30rem at 100% 0,
-        hsl(var(--brand-accent) / 0.05),
+        hsl(var(--brand-accent) / 0.07),
         transparent 60%
       );
     background-repeat: no-repeat;
     background-attachment: fixed;
+  }
+
+  /* Signature "orb" glow — a radial blue halo behind hero content (the reference's motif). */
+  .orb-glow {
+    position: relative;
+    isolation: isolate;
+  }
+  .orb-glow::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    left: 50%;
+    top: 38%;
+    width: min(46rem, 92vw);
+    aspect-ratio: 1;
+    transform: translate(-50%, -50%);
+    border-radius: 9999px;
+    background: radial-gradient(
+      circle,
+      hsl(var(--primary) / 0.18),
+      hsl(var(--brand-accent) / 0.1) 38%,
+      transparent 66%
+    );
+    filter: blur(6px);
+    pointer-events: none;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .orb-glow::before {
+      animation: orb-breathe 7s ease-in-out infinite;
+    }
+  }
+  @keyframes orb-breathe {
+    0%,
+    100% {
+      opacity: 0.85;
+      transform: translate(-50%, -50%) scale(1);
+    }
+    50% {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1.05);
+    }
   }
 }
