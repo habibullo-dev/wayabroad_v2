@@ -191,7 +191,7 @@ async function main() {
     country: "Uzbekistan",
     gpa: 3.7,
     gpa_scale: 4,
-    intended_degree: "Master's",
+    intended_degree: "Master", // must be a canonical DEGREES value ("Bachelor"|"Master"|"PhD") — the matcher hard-filters on exact equality
     intended_field: "Computer Science",
     language_test: "IELTS",
     language_score: 7,
