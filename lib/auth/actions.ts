@@ -77,7 +77,8 @@ export async function signInWithGoogle(): Promise<void> {
   const supabase = createServerSupabase();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
-    options: { redirectTo: `${CALLBACK}?next=/onboarding` },
+    // Land on the dashboard (the single home); it nudges new users to complete onboarding.
+    options: { redirectTo: `${CALLBACK}?next=/dashboard` },
   });
   if (error || !data.url) redirect("/login?error=oauth");
   redirect(data.url);

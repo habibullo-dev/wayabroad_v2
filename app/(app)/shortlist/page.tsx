@@ -17,7 +17,7 @@ import {
 import { scoreAdmission } from "@/lib/probability/score";
 import { createServerSupabase } from "@/lib/supabase/server";
 
-export const metadata: Metadata = { title: "Your shortlist" };
+export const metadata: Metadata = { title: "Your matches" };
 
 export default async function ShortlistPage() {
   const user = await getCurrentUser();
@@ -74,7 +74,7 @@ export default async function ShortlistPage() {
       <header className="mb-2 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="font-display text-3xl font-semibold tracking-tight">
-            Your shortlist
+            Your matches
           </h1>
           <p className="mt-1 text-muted-foreground">
             {matches.length} {student.intended_degree} programs ranked for your

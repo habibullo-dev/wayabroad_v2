@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 
 const AUTHED_NAV = [
   { href: "/dashboard", label: "Dashboard" },
-  { href: "/shortlist", label: "Shortlist" },
+  { href: "/shortlist", label: "Matches" },
   { href: "/applications", label: "Applications" },
   { href: "/universities", label: "Universities" },
   { href: "/blog", label: "Guides" },

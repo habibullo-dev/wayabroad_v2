@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Check, Circle, FileText, GraduationCap } from "lucide-react";
+import { Check, Circle, GraduationCap } from "lucide-react";
 
-import { StatusTimeline } from "@/components/applications/status-timeline";
+import { ApplicationCard } from "@/components/applications/application-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -215,30 +215,9 @@ export default async function DashboardPage() {
           </Card>
         ) : (
           <ul className="grid gap-4">
-            {applications.map(({ application, program, university }) => (
-              <li key={application.id}>
-                <Link
-                  href={`/applications/${application.id}`}
-                  className="group block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                >
-                  <Card className="flex flex-col gap-4 p-5 transition-colors group-hover:border-primary/40">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <h3 className="font-display text-lg font-semibold leading-tight">
-                          {program.name}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          {university.name} · {program.degree_level}
-                        </p>
-                      </div>
-                      <FileText
-                        className="size-5 shrink-0 text-muted-foreground"
-                        aria-hidden
-                      />
-                    </div>
-                    <StatusTimeline status={application.status} />
-                  </Card>
-                </Link>
+            {applications.map((summary) => (
+              <li key={summary.application.id}>
+                <ApplicationCard summary={summary} showTimeline />
               </li>
             ))}
           </ul>

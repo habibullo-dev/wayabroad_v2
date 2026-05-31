@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { FileText } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
+import { ApplicationCard } from "@/components/applications/application-card";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { getMyApplications } from "@/lib/documents/data";
@@ -37,29 +37,9 @@ export default async function ApplicationsPage() {
         </Card>
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2">
-          {apps.map(({ application, program, university }) => (
-            <li key={application.id}>
-              <Link
-                href={`/applications/${application.id}`}
-                className="group block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              >
-                <Card className="flex h-full flex-col gap-2 p-5 transition-colors group-hover:border-primary/40">
-                  <div className="flex items-start justify-between gap-2">
-                    <h2 className="font-display text-lg font-semibold leading-tight">
-                      {program.name}
-                    </h2>
-                    <Badge variant="secondary">
-                      {application.status.replace("_", " ")}
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {university.name} · {program.degree_level}
-                  </p>
-                  <p className="mt-auto pt-2 text-sm font-medium text-primary">
-                    Open documents →
-                  </p>
-                </Card>
-              </Link>
+          {apps.map((summary) => (
+            <li key={summary.application.id}>
+              <ApplicationCard summary={summary} headingLevel="h2" />
             </li>
           ))}
         </ul>

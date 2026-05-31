@@ -107,5 +107,5 @@ export async function saveProfile(
     return { error: "Couldn't save your profile. Please try again." };
   }
 
-  redirect("/shortlist");
+  redirect("/dashboard");
 }
