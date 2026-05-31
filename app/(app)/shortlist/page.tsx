@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { ProgramCard } from "@/components/shortlist/program-card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { DataBadge } from "@/components/ui/data-badge";
 import { getCurrentUser } from "@/lib/auth/user";
 import { getRankedMatches } from "@/lib/matching/ranked";
 import { createServerSupabase } from "@/lib/supabase/server";
@@ -56,9 +56,7 @@ export default async function ShortlistPage() {
             </Link>
           </p>
         </div>
-        <Badge variant={isLive ? "success" : "warning"}>
-          {isLive ? "Live data" : "Sample data"}
-        </Badge>
+        <DataBadge live={isLive} />
       </header>
       <p className="mb-6 text-sm text-muted-foreground">
         Match scores estimate fit from your profile; the chance estimate uses

@@ -1,7 +1,8 @@
-import { BadgeCheck, ExternalLink, Info } from "lucide-react";
+import { BadgeCheck, ExternalLink } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Note } from "@/components/ui/note";
 import { COST_ESTIMATE_NOTE, KRW_PER_USD } from "@/lib/config";
 import type { University } from "@/lib/data/types";
 import { fieldTrust, getVerified, type TrustLevel } from "@/lib/data/verified";
@@ -194,18 +195,16 @@ export function CostBreakdown({ university }: { university: University }) {
       </dl>
 
       {shownTrust === "verified" ? (
-        <p className="mt-4 flex items-start gap-2 rounded-lg border border-success/25 bg-success/10 px-3 py-2 text-xs text-success">
-          <BadgeCheck className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+        <Note variant="verified" className="mt-4">
           Tuition is verified from the university&rsquo;s official source. Dorm,
           living and visa are estimates — verify with the university.
-        </p>
+        </Note>
       ) : (
-        <p className="mt-4 flex items-start gap-2 rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-warning-foreground">
-          <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+        <Note variant="estimate" className="mt-4">
           {shownTrust === "estimate"
             ? "Tuition is a multi-source estimate — confirm the current figure with the university. Dorm, living and visa are estimates too."
             : COST_ESTIMATE_NOTE}
-        </p>
+        </Note>
       )}
 
       {aiValidated && (

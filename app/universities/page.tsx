@@ -5,6 +5,7 @@ import { MapPin } from "lucide-react";
 import { UniversityLogo } from "@/components/universities/university-logo";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { DataBadge } from "@/components/ui/data-badge";
 import { getUniversities } from "@/lib/data/universities";
 import { formatUsd } from "@/lib/format";
 
@@ -24,9 +25,7 @@ export default async function UniversitiesPage() {
             {universities.length} institutions with transparent cost estimates.
           </p>
         </div>
-        <Badge variant={source === "live" ? "success" : "warning"}>
-          {source === "live" ? "Live data" : "Sample data"}
-        </Badge>
+        <DataBadge live={source === "live"} />
       </header>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
