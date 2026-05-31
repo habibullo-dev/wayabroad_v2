@@ -59,8 +59,10 @@ export default async function DashboardPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
       <header className="mb-8">
-        <p className="text-sm text-muted-foreground">Mission control</p>
-        <h1 className="font-display text-3xl font-semibold tracking-tight">
+        <p className="text-xs font-semibold uppercase tracking-widest text-primary">
+          Mission control
+        </p>
+        <h1 className="mt-1.5 font-display text-3xl font-semibold tracking-tight">
           {firstName ? `Welcome back, ${firstName}` : "Welcome back"}
         </h1>
         <p className="mt-1 text-muted-foreground">
@@ -75,7 +77,9 @@ export default async function DashboardPage() {
         <Card className="flex flex-col gap-4 p-6">
           <div className="flex items-center justify-between gap-3">
             <h2 className="font-display text-lg font-semibold">Your journey</h2>
-            <Badge variant="muted">{doneCount}/5 done</Badge>
+            <Badge variant={doneCount === steps.length ? "success" : "muted"}>
+              {doneCount}/{steps.length} done
+            </Badge>
           </div>
           <ol className="flex flex-col gap-1">
             {steps.map((step) => {
