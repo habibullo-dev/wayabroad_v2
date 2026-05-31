@@ -32,14 +32,47 @@ export interface VerifiedAppFee extends VerifiedField {
   krw: number | null;
 }
 
+export interface VerifiedDorm extends VerifiedField {
+  krw_per_semester: number | null;
+}
+
+export interface VerifiedLiving extends VerifiedField {
+  usd_per_month: number | null;
+}
+
+export interface VerifiedRequirements extends VerifiedField {
+  topik_min: number | null;
+  ielts_min: number | null;
+  toefl_ibt_min: number | null;
+  deadline_text: string | null;
+}
+
+export interface VerifiedRanking extends VerifiedField {
+  /** QS world ranking — a number or a band like "501-510". */
+  qs_world: string | null;
+}
+
+export interface VerifiedAcceptance extends VerifiedField {
+  rate_pct: number | null;
+  intl_rate_pct: number | null;
+}
+
 export interface VerifiedOverlay {
   rank: number | null;
-  /** Record-level verification_status (verified | partially_verified | estimated | …). */
+  /** Record-level verification_status (verified | partially_verified | estimated | ai_web | …). */
   status: string;
   official_site: string | null;
+  /** Set by the AI web-search validator: ISO date + provider tag. */
+  validated_on: string | null;
+  validated_via: string | null;
   tuition_ug: VerifiedTuition | null;
   scholarships: VerifiedScholarships | null;
   application_fee: VerifiedAppFee | null;
+  dorm: VerifiedDorm | null;
+  living: VerifiedLiving | null;
+  requirements: VerifiedRequirements | null;
+  ranking: VerifiedRanking | null;
+  acceptance: VerifiedAcceptance | null;
 }
 
 function str(v: unknown): string | null {
@@ -101,13 +134,62 @@ export function getVerified(
       }
     : null;
 
+  const base = (o: Record<string, unknown>): VerifiedField => ({
+    status: str(o.status) ?? "pending",
+    source_url: str(o.source_url),
+    verified_on: str(o.verified_on),
+    note: str(o.note),
+  });
+
+  const d = obj(root.dorm);
+  const dorm: VerifiedDorm | null = d
+    ? { krw_per_semester: num(d.krw_per_semester), ...base(d) }
+    : null;
+
+  const lv = obj(root.living);
+  const living: VerifiedLiving | null = lv
+    ? { usd_per_month: num(lv.usd_per_month), ...base(lv) }
+    : null;
+
+  const rq = obj(root.requirements);
+  const requirements: VerifiedRequirements | null = rq
+    ? {
+        topik_min: num(rq.topik_min),
+        ielts_min: num(rq.ielts_min),
+        toefl_ibt_min: num(rq.toefl_ibt_min),
+        deadline_text: str(rq.deadline_text),
+        ...base(rq),
+      }
+    : null;
+
+  const rk = obj(root.ranking);
+  const ranking: VerifiedRanking | null = rk
+    ? { qs_world: str(rk.qs_world), ...base(rk) }
+    : null;
+
+  const ac = obj(root.acceptance);
+  const acceptance: VerifiedAcceptance | null = ac
+    ? {
+        rate_pct: num(ac.rate_pct),
+        intl_rate_pct: num(ac.intl_rate_pct),
+        ...base(ac),
+      }
+    : null;
+
   return {
     rank: num(root.rank),
     status: str(root.status) ?? "pending",
     official_site: str(root.official_site),
+    validated_on: str(root.validated_on),
+    validated_via: str(root.validated_via),
     tuition_ug,
     scholarships,
     application_fee,
+    dorm,
+    living,
+    requirements,
+    ranking,
+    acceptance,
   };
 }
 
