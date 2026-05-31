@@ -6,6 +6,7 @@ import { ExternalLink, MapPin } from "lucide-react";
 import { CostBreakdown } from "@/components/universities/cost-breakdown";
 import { UniversityGallery } from "@/components/universities/university-gallery";
 import { UniversityLogo } from "@/components/universities/university-logo";
+import { UniversityMajors } from "@/components/universities/university-majors";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -194,6 +195,8 @@ export default async function UniversityPage({ params }: Params) {
           <CostBreakdown university={university} />
         </aside>
       </div>
+
+      <UniversityMajors slug={university.slug} />
     </div>
   );
 }
