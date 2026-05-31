@@ -78,23 +78,34 @@ export function createOpenAiValidator(opts: {
   return {
     async extract(prompt, schema, label) {
       calls += 1;
-      let text: string;
-      try {
-        const res = await client.responses.create({
-          model,
-          tools: [{ type: "web_search" }],
-          input: prompt,
-        });
-        inputTokens += res.usage?.input_tokens ?? 0;
-        outputTokens += res.usage?.output_tokens ?? 0;
-        text = res.output_text ?? "";
-      } catch (err) {
-        // eslint-disable-next-line no-console
-        console.warn(
-          `[validate] extract failed${label ? ` (${label})` : ""}: ${(err as Error).message}`,
-        );
-        return null;
+      // Retry transient failures (rate limits / 5xx / network) so parallel runs don't drop data.
+      let text: string | null = null;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          const res = await client.responses.create({
+            model,
+            tools: [{ type: "web_search" }],
+            input: prompt,
+          });
+          inputTokens += res.usage?.input_tokens ?? 0;
+          outputTokens += res.usage?.output_tokens ?? 0;
+          text = res.output_text ?? "";
+          break;
+        } catch (err) {
+          const status = (err as { status?: number }).status;
+          const transient = status == null || status === 429 || status >= 500;
+          if (transient && attempt < 3) {
+            await new Promise((r) => setTimeout(r, attempt * 2000));
+            continue;
+          }
+          // eslint-disable-next-line no-console
+          console.warn(
+            `[validate] extract failed${label ? ` (${label})` : ""}: ${(err as Error).message}`,
+          );
+          return null;
+        }
       }
+      if (text == null) return null;
 
       const json = extractJsonObject(text);
       if (json == null) return null;

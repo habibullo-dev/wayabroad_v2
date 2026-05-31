@@ -43,6 +43,8 @@ const STATUS = "ai_web";
 
 const args = process.argv.slice(2);
 const all = args.includes("--all");
+const force = args.includes("--force"); // re-validate even if done today
+const CONCURRENCY = 5; // universities processed in parallel
 const slugs = args.filter((a) => !a.startsWith("--"));
 if (!all && slugs.length === 0) {
   console.error(
@@ -101,6 +103,101 @@ function summarize(field: unknown): string {
   return parts.length ? parts.join(" ") : "(set)";
 }
 
+type UniRow = {
+  id: number;
+  name: string;
+  city: string | null;
+  slug: string;
+  verified: unknown;
+};
+
+/** Validate one university and write the merged overlay; returns its diff block. */
+async function processUni(
+  uni: UniRow,
+  validator: ReturnType<typeof createOpenAiValidator>,
+): Promise<string[]> {
+  const lines: string[] = [`\n## ${uni.name} (${uni.slug})`];
+  const v = await validateUniversity(
+    { name: uni.name, city: uni.city },
+    validator,
+  );
+
+  const existing: Json =
+    uni.verified &&
+    typeof uni.verified === "object" &&
+    !Array.isArray(uni.verified)
+      ? (uni.verified as Json)
+      : {};
+
+  // Build the AI-sourced overlay fields (null when uncited / no value).
+  const candidates: Record<string, Json | null> = {
+    tuition_ug: v.tuition
+      ? sourced(v.tuition, {
+          krw_min: n(v.tuition.krw_min),
+          krw_max: n(v.tuition.krw_max),
+          krw_per_semester: n(v.tuition.krw_per_semester),
+          usd_per_year:
+            n(v.tuition.krw_per_semester) != null
+              ? Math.round((v.tuition.krw_per_semester! * 2) / KRW_PER_USD)
+              : null,
+        })
+      : null,
+    dorm: v.dorm
+      ? sourced(v.dorm, { krw_per_semester: n(v.dorm.krw_per_semester) })
+      : null,
+    living: v.living
+      ? sourced(v.living, { usd_per_month: n(v.living.usd_per_month) })
+      : null,
+    application_fee: v.appFee
+      ? sourced(v.appFee, { krw: n(v.appFee.krw) })
+      : null,
+    requirements: v.requirements
+      ? sourced(v.requirements, {
+          topik_min: n(v.requirements.topik_min),
+          ielts_min: n(v.requirements.ielts_min),
+          toefl_ibt_min: n(v.requirements.toefl_ibt_min),
+          deadline_text: v.requirements.deadline_text ?? null,
+        })
+      : null,
+    ranking: v.ranking?.qs_world
+      ? sourced(v.ranking, { qs_world: v.ranking.qs_world })
+      : null,
+    acceptance: v.acceptance
+      ? sourced(v.acceptance, {
+          rate_pct: n(v.acceptance.rate_pct),
+          intl_rate_pct: n(v.acceptance.intl_rate_pct),
+        })
+      : null,
+  };
+
+  const merged: Json = { ...existing };
+  for (const [key, next] of Object.entries(candidates)) {
+    if (!next) continue; // AI found nothing citable — leave existing untouched
+    const prev = existing[key] as Json | undefined;
+    if (prev?.status === "verified_official") {
+      lines.push(
+        `  ! ${key}: keeping official (${summarize(prev)}); AI says ${summarize(next)} — ${next.source_url}`,
+      );
+      continue; // never downgrade human-verified
+    }
+    lines.push(
+      `  • ${key}: ${summarize(prev)} → ${summarize(next)}  [${next.source_url}]`,
+    );
+    merged[key] = next;
+  }
+  merged.validated_on = TODAY;
+  merged.validated_via = `openai:${model}`;
+
+  const { error: upErr } = await supabase
+    .from("universities")
+    .update({ verified: merged as unknown as DbJson })
+    .eq("id", uni.id);
+  if (upErr) lines.push(`  ✗ update failed: ${upErr.message}`);
+
+  console.log(lines.join("\n")); // contiguous per-university block
+  return lines;
+}
+
 async function run() {
   console.log(`[validate:data] target=${new URL(url!).host} model=${model}`);
   let q = supabase
@@ -108,112 +205,53 @@ async function run() {
     .select("id, name, city, slug, verified");
   if (!all) q = q.in("slug", slugs);
   const { data: unis, error } = await q.order("slug");
-  if (error || !unis) {
+  if (error || !unis || unis.length === 0) {
     console.error(
       "[validate:data] could not load universities:",
-      error?.message,
+      error?.message ?? "none matched",
     );
     process.exit(1);
   }
-  if (unis.length === 0) {
-    console.error(
-      "[validate:data] no matching universities for:",
-      slugs.join(", "),
-    );
-    process.exit(1);
-  }
+
+  // Skip universities already validated today (resume cheaply) unless --force.
+  const validatedToday = (u: UniRow) =>
+    u.verified &&
+    typeof u.verified === "object" &&
+    !Array.isArray(u.verified) &&
+    (u.verified as Json).validated_on === TODAY;
+  const targets = force ? unis : unis.filter((u) => !validatedToday(u));
+  const skipped = unis.length - targets.length;
+  console.log(
+    `[validate:data] ${targets.length} to validate, ${skipped} already done today · concurrency ${CONCURRENCY}`,
+  );
 
   const validator = createOpenAiValidator({ apiKey: openaiKey!, model });
   const report: string[] = [
     `# AI validation run — ${TODAY} (model ${model})\n`,
   ];
 
-  for (const uni of unis) {
-    console.log(`\n▶ ${uni.name} (${uni.slug})`);
-    report.push(`\n## ${uni.name} (${uni.slug})`);
-    const v = await validateUniversity(
-      { name: uni.name, city: uni.city },
-      validator,
-    );
-
-    const existing: Json =
-      uni.verified &&
-      typeof uni.verified === "object" &&
-      !Array.isArray(uni.verified)
-        ? (uni.verified as Json)
-        : {};
-
-    // Build the AI-sourced overlay fields (null when uncited / no value).
-    const candidates: Record<string, Json | null> = {
-      tuition_ug: v.tuition
-        ? sourced(v.tuition, {
-            krw_min: n(v.tuition.krw_min),
-            krw_max: n(v.tuition.krw_max),
-            krw_per_semester: n(v.tuition.krw_per_semester),
-            usd_per_year:
-              n(v.tuition.krw_per_semester) != null
-                ? Math.round((v.tuition.krw_per_semester! * 2) / KRW_PER_USD)
-                : null,
-          })
-        : null,
-      dorm: v.dorm
-        ? sourced(v.dorm, { krw_per_semester: n(v.dorm.krw_per_semester) })
-        : null,
-      living: v.living
-        ? sourced(v.living, { usd_per_month: n(v.living.usd_per_month) })
-        : null,
-      application_fee: v.appFee
-        ? sourced(v.appFee, { krw: n(v.appFee.krw) })
-        : null,
-      requirements: v.requirements
-        ? sourced(v.requirements, {
-            topik_min: n(v.requirements.topik_min),
-            ielts_min: n(v.requirements.ielts_min),
-            toefl_ibt_min: n(v.requirements.toefl_ibt_min),
-            deadline_text: v.requirements.deadline_text ?? null,
-          })
-        : null,
-      ranking: v.ranking?.qs_world
-        ? sourced(v.ranking, { qs_world: v.ranking.qs_world })
-        : null,
-      acceptance: v.acceptance
-        ? sourced(v.acceptance, {
-            rate_pct: n(v.acceptance.rate_pct),
-            intl_rate_pct: n(v.acceptance.intl_rate_pct),
-          })
-        : null,
-    };
-
-    const merged: Json = { ...existing };
-    for (const [key, next] of Object.entries(candidates)) {
-      if (!next) continue; // AI found nothing citable — leave existing untouched
-      const prev = existing[key] as Json | undefined;
-      if (prev?.status === "verified_official") {
-        const line = `  ! ${key}: keeping official (${summarize(prev)}); AI says ${summarize(next)} — ${next.source_url}`;
-        console.log(line);
+  // Concurrency pool: process up to CONCURRENCY universities at once.
+  let idx = 0;
+  const worker = async () => {
+    while (idx < targets.length) {
+      const uni = targets[idx++];
+      if (!uni) continue;
+      // Isolate per-university failures so one bad uni can't abort the whole pool.
+      try {
+        report.push(...(await processUni(uni, validator)));
+      } catch (err) {
+        const line = `\n## ${uni.name} (${uni.slug})\n  ✗ failed: ${(err as Error).message}`;
+        console.error(line);
         report.push(line);
-        continue; // never downgrade human-verified
       }
-      const line = `  • ${key}: ${summarize(prev)} → ${summarize(next)}  [${next.source_url}]`;
-      console.log(line);
-      report.push(line);
-      merged[key] = next;
     }
-    merged.validated_on = TODAY;
-    merged.validated_via = `openai:${model}`;
-
-    const { error: upErr } = await supabase
-      .from("universities")
-      .update({ verified: merged as unknown as DbJson })
-      .eq("id", uni.id);
-    if (upErr) {
-      console.error(`  ✗ update failed: ${upErr.message}`);
-      report.push(`  ✗ update failed: ${upErr.message}`);
-    }
-  }
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(CONCURRENCY, targets.length) }, worker),
+  );
 
   const u = validator.usage();
-  const summary = `\n[validate:data] done. ${unis.length} universities · ${u.calls} web-search calls · ${u.input} in + ${u.output} out tokens.`;
+  const summary = `\n[validate:data] done. ${targets.length} validated, ${skipped} skipped · ${u.calls} calls · ${u.input} in + ${u.output} out tokens.`;
   console.log(summary);
   report.push(summary);
 
