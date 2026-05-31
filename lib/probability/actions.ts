@@ -2,17 +2,14 @@
 
 import { z } from "zod";
 
-import {
-  getAdmissionRecords,
-  getProgramWithUniversity,
-} from "@/lib/data/admissions";
+import { getProgramWithUniversity } from "@/lib/data/admissions";
 import {
   GPA_SCALES,
   LANGUAGE_TESTS,
   languageScoreError,
 } from "@/lib/profile/constants";
 import {
-  toAdmissionRecords,
+  toBaseRate,
   toProgramInfo,
   toStudentProfile,
 } from "@/lib/probability/adapter";
@@ -74,7 +71,6 @@ export async function runProbabilityCheck(
   const pair = await getProgramWithUniversity(d.programId);
   if (!pair) return { error: "That program couldn't be found. Pick another." };
 
-  const records = await getAdmissionRecords(d.programId);
   const student = toStudentProfile({
     gpa: d.gpa,
     gpaScale: d.gpa_scale,
@@ -85,7 +81,7 @@ export async function runProbabilityCheck(
   const result = scoreAdmission(
     student,
     toProgramInfo(pair.program, pair.university),
-    toAdmissionRecords(records),
+    toBaseRate(pair.university),
   );
   return {
     result,

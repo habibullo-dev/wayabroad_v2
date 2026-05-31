@@ -13,11 +13,19 @@ import { cn } from "@/lib/utils";
 
 const CONF_VARIANT: Record<
   ProbabilityResult["confidence"],
-  "success" | "warning" | "muted"
+  "warning" | "muted"
 > = {
-  high: "success",
   moderate: "warning",
   low: "muted",
+};
+
+const CATEGORY_VARIANT: Record<
+  ProbabilityResult["category"],
+  "success" | "accent" | "warning"
+> = {
+  safety: "success",
+  match: "accent",
+  reach: "warning",
 };
 
 export function ProgramCard({
@@ -62,6 +70,12 @@ export function ProgramCard({
       <div className="flex flex-wrap items-center gap-2">
         {probability && (
           <>
+            <Badge
+              variant={CATEGORY_VARIANT[probability.category]}
+              className="capitalize"
+            >
+              {probability.category}
+            </Badge>
             <Badge variant={CONF_VARIANT[probability.confidence]}>
               {probability.confidence} confidence
             </Badge>

@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import {
   scoreAdmission,
-  type AdmissionRecord,
   type ProgramInfo,
   type StudentProfile,
 } from "@/lib/probability/score";
@@ -16,46 +15,47 @@ const eliteCs: ProgramInfo = {
   tierBand: "elite",
 };
 
-describe("scoreAdmission — drivers & shape", () => {
-  it("always returns GPA, selectivity, and language drivers plus a bracketing band", () => {
-    const r = scoreAdmission(
-      { gpa: 3.8, langTest: "IELTS", langScore: 7.0 },
-      eliteCs,
-    );
+const strong: StudentProfile = { gpa: 3.8, langTest: "IELTS", langScore: 7.0 };
+const belowGpa: StudentProfile = {
+  gpa: 3.1,
+  langTest: "IELTS",
+  langScore: 6.0,
+};
+const belowLang: StudentProfile = {
+  gpa: 3.6,
+  langTest: "IELTS",
+  langScore: 5.0,
+};
+
+describe("scoreAdmission — shape & drivers", () => {
+  it("returns GPA, selectivity, language drivers + a bracketing band, never 'high'", () => {
+    const r = scoreAdmission(strong, eliteCs);
     const factors = r.drivers.map((d) => d.factor);
     expect(factors).toContain("Academic record (GPA)");
     expect(factors).toContain("Program selectivity");
     expect(factors).toContain("Language proficiency");
     expect(r.band[0]).toBeLessThanOrEqual(r.percent);
     expect(r.band[1]).toBeGreaterThanOrEqual(r.percent);
-    expect(r.band[0]).toBeGreaterThanOrEqual(1);
-    expect(r.band[1]).toBeLessThanOrEqual(99);
+    expect(["low", "moderate"]).toContain(r.confidence);
+  });
+
+  it("never blends synthetic outcomes — no 'similar applicants' driver", () => {
+    const r = scoreAdmission(strong, eliteCs);
+    expect(
+      r.drivers.find((d) => /similar applicants/i.test(d.factor)),
+    ).toBeUndefined();
   });
 });
 
-describe("scoreAdmission — ordering & hard gates", () => {
-  const strong: StudentProfile = {
-    gpa: 3.8,
-    langTest: "IELTS",
-    langScore: 7.0,
-  };
-  const belowGpa: StudentProfile = {
-    gpa: 3.1,
-    langTest: "IELTS",
-    langScore: 6.0,
-  };
-  const belowLang: StudentProfile = {
-    gpa: 3.6,
-    langTest: "IELTS",
-    langScore: 5.0,
-  };
-
-  it("scores a strong eligible applicant on the rules prior with no data", () => {
+describe("scoreAdmission — prior basis (no validated rate)", () => {
+  it("scores a strong eligible applicant on the labeled tier prior", () => {
     const r = scoreAdmission(strong, eliteCs);
-    // prior = 0.30 (elite) + 0.2*0.35 = 0.37 → 37%
-    expect(r.percent).toBe(37);
+    // base 0.30 (elite prior) + gpaMargin 0.2*0.30 + IELTS margin 1.0*0.05 = 0.41
+    expect(r.percent).toBe(41);
+    expect(r.basis).toBe("prior");
     expect(r.eligible).toBe(true);
-    expect(r.confidence).toBe("low"); // no records
+    expect(r.confidence).toBe("low");
+    expect(r.category).toBe("match");
   });
 
   it("ranks strong > below-GPA and strong > below-language", () => {
@@ -64,8 +64,11 @@ describe("scoreAdmission — ordering & hard gates", () => {
     expect(s).toBeGreaterThan(scoreAdmission(belowLang, eliteCs).percent);
   });
 
-  it("marks failing applicants ineligible and applies the language hard gate", () => {
-    expect(scoreAdmission(belowGpa, eliteCs).eligible).toBe(false);
+  it("marks failing applicants ineligible (reach) and applies the language hard gate", () => {
+    const bg = scoreAdmission(belowGpa, eliteCs);
+    expect(bg.eligible).toBe(false);
+    expect(bg.category).toBe("reach");
+
     const lang = scoreAdmission(belowLang, eliteCs);
     expect(lang.eligible).toBe(false);
     expect(lang.percent).toBeLessThan(20);
@@ -75,77 +78,52 @@ describe("scoreAdmission — ordering & hard gates", () => {
   });
 });
 
-describe("scoreAdmission — empirical blend & confidence", () => {
-  const mid: ProgramInfo = {
-    language: "English",
-    minGpa: 3.0,
-    minIelts: 6.0,
-    tierBand: "mid",
-  };
-  const student: StudentProfile = { gpa: 3.5, langTest: "IELTS", langScore: 7 };
-  const recs = (
-    outcome: "admit" | "reject",
-    count: number,
-  ): AdmissionRecord[] =>
-    Array.from({ length: count }, () => ({
-      applicantGpa: 3.5,
-      langTest: "IELTS",
-      langScore: 7,
-      outcome,
-    }));
-
-  it("moves the score toward observed outcomes", () => {
-    const up = scoreAdmission(student, mid, recs("admit", 10)).percent;
-    const down = scoreAdmission(student, mid, recs("reject", 10)).percent;
-    const none = scoreAdmission(student, mid).percent;
-    expect(up).toBeGreaterThan(none);
-    expect(down).toBeLessThan(none);
+describe("scoreAdmission — validated acceptance rate", () => {
+  it("anchors to a cited acceptance rate and reports it as the basis", () => {
+    const r = scoreAdmission(strong, eliteCs, {
+      rate: 0.1,
+      international: true,
+      sourceUrl: "https://example.edu/admissions",
+    });
+    // base 0.10 + 0.06 (gpa) + 0.05 (lang) = 0.21
+    expect(r.percent).toBe(21);
+    expect(r.basis).toBe("validated_rate");
+    expect(r.confidence).toBe("moderate");
+    expect(r.category).toBe("reach"); // eligible but < 30%
+    expect(
+      r.drivers.find((d) => d.factor === "Program selectivity")?.detail,
+    ).toMatch(/10%/);
   });
 
-  it("scales confidence with comparable sample size", () => {
-    expect(scoreAdmission(student, mid).confidence).toBe("low");
-    expect(scoreAdmission(student, mid, recs("admit", 10)).confidence).toBe(
-      "moderate",
-    );
-    expect(scoreAdmission(student, mid, recs("admit", 16)).confidence).toBe(
-      "high",
-    );
-  });
-
-  it("ignores records outside the comparable GPA band (±0.4)", () => {
-    const farRecords: AdmissionRecord[] = Array.from({ length: 12 }, () => ({
-      applicantGpa: 2.0,
-      langTest: "IELTS",
-      langScore: 7,
-      outcome: "admit",
-    }));
-    const r = scoreAdmission(student, mid, farRecords);
-    expect(r.sampleSize).toBe(0);
+  it("a generous validated rate can read as a safety", () => {
+    const r = scoreAdmission(strong, eliteCs, { rate: 0.7 });
+    expect(r.percent).toBeGreaterThanOrEqual(55);
+    expect(r.category).toBe("safety");
   });
 });
 
-describe("scoreAdmission — no language test on file", () => {
-  it("does not crash, flags language unconfirmed, and applies no hard gate", () => {
+describe("scoreAdmission — no usable language test", () => {
+  it("flags language unconfirmed, applies no hard gate, stays ineligible", () => {
     const r = scoreAdmission(
       { gpa: 3.8, langTest: null, langScore: null },
       eliteCs,
     );
     expect(r.languageConfirmed).toBe(false);
-    expect(r.eligible).toBe(false); // can't confirm eligibility
-    // no ×0.25 gate, so it stays on the prior (37%), unlike a confirmed language failure
-    expect(r.percent).toBe(37);
+    expect(r.eligible).toBe(false);
+    // base 0.30 + gpa 0.06, no language gate → 36%
+    expect(r.percent).toBe(36);
     expect(
       r.drivers.find((d) => d.factor === "Language proficiency")?.impact,
     ).toBe("neutral");
   });
 
-  it("treats TOPIK as unconfirmed for an English-taught program (no hard gate, not eligible)", () => {
+  it("treats TOPIK as unconfirmed for an English-taught program (no hard gate)", () => {
     const r = scoreAdmission(
       { gpa: 3.8, langTest: "TOPIK", langScore: 6 },
       eliteCs,
     );
     expect(r.languageConfirmed).toBe(false);
     expect(r.eligible).toBe(false);
-    expect(r.percent).toBe(37); // prior, NOT hard-gated to ~9%
+    expect(r.percent).toBe(36); // prior + gpa, NOT hard-gated
   });
 });

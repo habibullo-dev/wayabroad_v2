@@ -9,9 +9,8 @@ import { getCurrentUser } from "@/lib/auth/user";
 import { getPrograms, getUniversities } from "@/lib/data/universities";
 import { rankPrograms, type MatchProfile } from "@/lib/matching/shortlist";
 import { normalizeGpaTo4 } from "@/lib/profile/constants";
-import { getAdmissionRecordsByProgram } from "@/lib/data/admissions";
 import {
-  toAdmissionRecords,
+  toBaseRate,
   toProgramInfo,
   toStudentProfile,
 } from "@/lib/probability/adapter";
@@ -61,10 +60,8 @@ export default async function ShortlistPage() {
   const matches = rankPrograms(profile, progs.data, byId);
   const isLive = unis.source === "live" && progs.source === "live";
 
-  // Admission-probability per shortlisted program (blends synthetic admission_records).
-  const recordsByProgram = await getAdmissionRecordsByProgram(
-    matches.map((m) => m.program.id),
-  );
+  // Admission-probability per shortlisted program, anchored to a validated acceptance rate
+  // (from the data validator) when available, else a labeled tier prior.
   const studentProfile = toStudentProfile({
     gpa: student.gpa,
     gpaScale: student.gpa_scale ?? 4,
@@ -92,9 +89,9 @@ export default async function ShortlistPage() {
         </Badge>
       </header>
       <p className="mb-6 text-sm text-muted-foreground">
-        Match scores estimate fit from your profile. Costs are estimates —
-        verify with each university. Full admission-probability scores arrive in
-        M3.
+        Match scores estimate fit from your profile; the chance estimate uses
+        program selectivity and your academic/language fit. Costs are estimates
+        — verify with each university.
       </p>
 
       {matches.length === 0 ? (
@@ -115,7 +112,7 @@ export default async function ShortlistPage() {
               probability={scoreAdmission(
                 studentProfile,
                 toProgramInfo(m.program, m.university),
-                toAdmissionRecords(recordsByProgram.get(m.program.id) ?? []),
+                toBaseRate(m.university),
               )}
             />
           ))}

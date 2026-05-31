@@ -1,11 +1,8 @@
-import type {
-  AdmissionRecord as DbAdmissionRecord,
-  Program,
-  University,
-} from "@/lib/data/types";
+import type { Program, University } from "@/lib/data/types";
+import { getVerified } from "@/lib/data/verified";
 import { normalizeGpaTo4 } from "@/lib/profile/constants";
 import type {
-  AdmissionRecord,
+  AcceptanceBaseRate,
   ProgramInfo,
   StudentProfile,
   TierBand,
@@ -37,27 +34,24 @@ export function toProgramInfo(
   };
 }
 
-/** Map DB admission_records rows into the engine's records (dropping incomplete rows). */
-export function toAdmissionRecords(
-  rows: DbAdmissionRecord[],
-): AdmissionRecord[] {
-  return rows.flatMap((r) => {
-    if (
-      r.applicant_gpa_4_0 == null ||
-      r.applicant_lang_score == null ||
-      (r.outcome !== "admit" && r.outcome !== "reject")
-    ) {
-      return [];
-    }
-    return [
-      {
-        applicantGpa: r.applicant_gpa_4_0,
-        langTest: r.applicant_lang_test ?? "",
-        langScore: r.applicant_lang_score,
-        outcome: r.outcome,
-      },
-    ];
-  });
+/**
+ * Build a validated base rate from a university's verified overlay, when the AI validator found
+ * a cited acceptance rate. Prefers the international rate; returns null when none is available
+ * (the engine then uses a clearly-labeled tier prior).
+ */
+export function toBaseRate(university: University): AcceptanceBaseRate | null {
+  const acc = getVerified(university)?.acceptance;
+  // Require a citation — an uncited rate must not become a "validated_rate" basis.
+  if (!acc || !acc.source_url) return null;
+  const intl = acc.intl_rate_pct;
+  const overall = acc.rate_pct;
+  const pct = intl != null && intl > 0 ? intl : overall;
+  if (pct == null || pct <= 0) return null;
+  return {
+    rate: pct / 100,
+    sourceUrl: acc.source_url,
+    international: intl != null && intl > 0,
+  };
 }
 
 /** Build a StudentProfile (GPA normalized to 4.0) from raw profile inputs. */

@@ -2,17 +2,28 @@ import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { SAMPLE_DATA_NOTE } from "@/lib/config";
-import type { Driver, ProbabilityResult } from "@/lib/probability/score";
+import type {
+  Category,
+  Driver,
+  ProbabilityResult,
+} from "@/lib/probability/score";
 import { cn } from "@/lib/utils";
 
 const CONFIDENCE: Record<
   ProbabilityResult["confidence"],
-  { label: string; variant: "success" | "warning" | "muted" }
+  { label: string; variant: "warning" | "muted" }
 > = {
-  high: { label: "High confidence", variant: "success" },
   moderate: { label: "Moderate confidence", variant: "warning" },
   low: { label: "Low confidence", variant: "muted" },
+};
+
+const CATEGORY: Record<
+  Category,
+  { label: string; variant: "success" | "warning" | "accent" }
+> = {
+  safety: { label: "Safety", variant: "success" },
+  match: { label: "Match", variant: "accent" },
+  reach: { label: "Reach", variant: "warning" },
 };
 
 const IMPACT_ICON: Record<Driver["impact"], typeof Minus> = {
@@ -35,6 +46,7 @@ export function ProbabilityCard({
   programName?: string;
 }) {
   const conf = CONFIDENCE[result.confidence];
+  const cat = CATEGORY[result.category];
 
   return (
     <Card className="p-6">
@@ -58,6 +70,7 @@ export function ProbabilityCard({
       </div>
 
       <div className="mt-2 flex flex-wrap items-center gap-2">
+        <Badge variant={cat.variant}>{cat.label}</Badge>
         <Badge variant={conf.variant}>{conf.label}</Badge>
         <span className="text-sm tabular-nums text-muted-foreground">
           likely range {result.band[0]}–{result.band[1]}%
@@ -95,10 +108,7 @@ export function ProbabilityCard({
         </ul>
       </div>
 
-      {result.sampleSize > 0 && (
-        <p className="mt-4 text-xs text-muted-foreground">{SAMPLE_DATA_NOTE}</p>
-      )}
-      <p className="mt-2 text-xs text-muted-foreground">{result.disclaimer}</p>
+      <p className="mt-4 text-xs text-muted-foreground">{result.disclaimer}</p>
     </Card>
   );
 }
