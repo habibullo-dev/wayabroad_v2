@@ -12,11 +12,13 @@ const AUTHED_NAV = [
   { href: "/shortlist", label: "Shortlist" },
   { href: "/applications", label: "Applications" },
   { href: "/universities", label: "Universities" },
+  { href: "/blog", label: "Guides" },
 ];
 
 const GUEST_NAV = [
   { href: "/check", label: "Free check" },
   { href: "/universities", label: "Universities" },
+  { href: "/blog", label: "Guides" },
 ];
 
 export function SiteHeader({

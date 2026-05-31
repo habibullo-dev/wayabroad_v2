@@ -49,5 +49,7 @@ pnpm-debug.log*
 !/docs/coursework/README.md
 # M3-prep verified DB + raw research pulls (owner playground; integrated into the app in M3).
 /files
+# Stray local clone of the v1 wayabroad repo (its own .git + secrets) — never commit it.
+/wayabroad/
 # --- playwright / local screenshot artifacts ---
 .playwright-mcp/
