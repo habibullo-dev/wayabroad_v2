@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { getUniversityDetail } from "@/lib/data/universities";
+import { getUniversityInfo } from "@/lib/data/university-info";
 import { fieldTrust, getVerified } from "@/lib/data/verified";
 
 type Params = { params: { slug: string } };
@@ -25,6 +26,7 @@ export default async function UniversityPage({ params }: Params) {
 
   const { university, programs } = detail.data;
   const isLive = detail.source === "live";
+  const info = getUniversityInfo(university.slug);
   const verified = getVerified(university);
   // Gate by status: only an official scholarships note overrides the seed as fact; a
   // non-official one is shown as an estimate; pending/absent falls back to the seed note.
@@ -61,6 +63,9 @@ export default async function UniversityPage({ params }: Params) {
               {university.tier_band && (
                 <Badge variant="secondary">{university.tier_band}</Badge>
               )}
+              {info?.qsRank && (
+                <Badge variant="outline">QS {info.qsRank}</Badge>
+              )}
               {!isLive && <Badge variant="warning">Sample data</Badge>}
             </div>
             {university.city && (
@@ -87,6 +92,12 @@ export default async function UniversityPage({ params }: Params) {
       </header>
 
       <UniversityGallery slug={university.slug} />
+
+      {info?.description && (
+        <p className="mt-6 max-w-3xl leading-relaxed text-muted-foreground">
+          {info.description}
+        </p>
+      )}
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_22rem]">
         <section>
@@ -126,6 +137,28 @@ export default async function UniversityPage({ params }: Params) {
               ))
             )}
           </ul>
+
+          {info && info.requirements.length > 0 && (
+            <Card className="mt-4 p-5">
+              <h3 className="font-display text-base font-semibold">
+                Admission requirements
+              </h3>
+              <ul className="mt-2 flex flex-col gap-1.5 text-sm text-muted-foreground">
+                {info.requirements.map((r) => (
+                  <li key={r} className="flex gap-2">
+                    <span
+                      aria-hidden
+                      className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary/60"
+                    />
+                    {r}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-3 text-xs text-muted-foreground">
+                Indicative — confirm current requirements with the university.
+              </p>
+            </Card>
+          )}
 
           {scholarships && (
             <Card className="mt-4 p-5">
