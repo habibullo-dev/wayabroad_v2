@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ExternalLink, MapPin } from "lucide-react";
 
+import { startApplication } from "@/lib/applications/actions";
 import { CostBreakdown } from "@/components/universities/cost-breakdown";
 import { UniversityGallery } from "@/components/universities/university-gallery";
 import { UniversityLogo } from "@/components/universities/university-logo";
@@ -102,11 +103,15 @@ export default async function UniversityPage({ params }: Params) {
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_22rem]">
         <section>
-          <h2 className="font-display text-xl font-semibold">Programs</h2>
+          <h2 className="font-display text-xl font-semibold">Apply to</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Programs WayAbroad tracks with admission odds and cost — start an
+            application in a click. See the full list of majors below.
+          </p>
           <ul className="mt-3 flex flex-col gap-2">
             {programs.length === 0 ? (
               <li className="text-sm text-muted-foreground">
-                No programs listed yet.
+                No tracked programs yet — browse the full major catalog below.
               </li>
             ) : (
               programs.map((p) => (
@@ -120,19 +125,19 @@ export default async function UniversityPage({ params }: Params) {
                           p.field,
                           p.language_of_instruction &&
                             `${p.language_of_instruction}-taught`,
+                          p.min_gpa_4_0_scale != null &&
+                            `min GPA ${p.min_gpa_4_0_scale}`,
                         ]
                           .filter(Boolean)
                           .join(" · ")}
                       </p>
                     </div>
-                    {p.min_gpa_4_0_scale != null && (
-                      <span className="shrink-0 text-sm text-muted-foreground">
-                        Min GPA{" "}
-                        <span className="font-medium tabular-nums text-foreground">
-                          {p.min_gpa_4_0_scale}
-                        </span>
-                      </span>
-                    )}
+                    <form action={startApplication} className="shrink-0">
+                      <input type="hidden" name="programId" value={p.id} />
+                      <Button type="submit" size="sm">
+                        Apply
+                      </Button>
+                    </form>
                   </Card>
                 </li>
               ))

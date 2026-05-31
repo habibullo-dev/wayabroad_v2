@@ -49,12 +49,14 @@ export function UniversityMajors({ slug }: { slug: string }) {
   if (!majors) return null;
 
   return (
-    <section className="mt-8">
-      <h2 className="font-display text-xl font-semibold">Majors offered</h2>
+    <section className="mt-10">
+      <h2 className="font-display text-xl font-semibold">
+        All programs &amp; majors
+      </h2>
       <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
-        Full catalog by college, compiled from university sources — separate
-        from the ranked programs above. Confirm current offerings with the
-        university.
+        The university&rsquo;s full catalog by college and track. The ones
+        WayAbroad tracks — with admission odds and cost — are in “Apply to”
+        above. Confirm current offerings with the university.
       </p>
       <div className="mt-3 flex flex-col gap-3">
         <Track label="English-taught" groups={majors.english} />
