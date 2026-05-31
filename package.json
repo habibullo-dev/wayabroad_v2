@@ -16,6 +16,7 @@
     "seed": "tsx scripts/seed.ts",
     "seed:demo": "tsx scripts/seed-demo.ts",
     "load:verified": "tsx scripts/load-verified.ts",
+    "validate:data": "tsx scripts/validate-data.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
