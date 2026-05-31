@@ -17,7 +17,7 @@ export default function AuthLayout({
           <Logo />
         </Link>
       </header>
-      <main className="flex flex-1 items-center justify-center px-4 py-10">
+      <main className="orb-glow flex flex-1 items-center justify-center px-4 py-10">
         {children}
       </main>
     </div>
