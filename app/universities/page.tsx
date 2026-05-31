@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { MapPin } from "lucide-react";
 
+import { UniversityLogo } from "@/components/universities/university-logo";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { getUniversities } from "@/lib/data/universities";
@@ -37,9 +38,16 @@ export default async function UniversitiesPage() {
           >
             <Card className="flex h-full flex-col gap-2 p-5 transition-colors group-hover:border-primary/40">
               <div className="flex items-start justify-between gap-2">
-                <h2 className="font-display text-lg font-semibold leading-tight">
-                  {u.name}
-                </h2>
+                <div className="flex items-start gap-3">
+                  <UniversityLogo
+                    slug={u.slug}
+                    name={u.name}
+                    className="size-10"
+                  />
+                  <h2 className="font-display text-lg font-semibold leading-tight">
+                    {u.name}
+                  </h2>
+                </div>
                 {u.tier_band && (
                   <Badge variant="secondary">{u.tier_band}</Badge>
                 )}

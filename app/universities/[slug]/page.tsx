@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { ExternalLink, MapPin } from "lucide-react";
 
 import { CostBreakdown } from "@/components/universities/cost-breakdown";
+import { UniversityGallery } from "@/components/universities/university-gallery";
+import { UniversityLogo } from "@/components/universities/university-logo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -45,23 +47,30 @@ export default async function UniversityPage({ params }: Params) {
       </Link>
 
       <header className="mt-3 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="font-display text-3xl font-semibold tracking-tight">
-              {university.name}
-            </h1>
-            {university.tier_band && (
-              <Badge variant="secondary">{university.tier_band}</Badge>
+        <div className="flex items-start gap-4">
+          <UniversityLogo
+            slug={university.slug}
+            name={university.name}
+            className="size-14"
+          />
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <h1 className="font-display text-3xl font-semibold tracking-tight">
+                {university.name}
+              </h1>
+              {university.tier_band && (
+                <Badge variant="secondary">{university.tier_band}</Badge>
+              )}
+              {!isLive && <Badge variant="warning">Sample data</Badge>}
+            </div>
+            {university.city && (
+              <p className="mt-1 inline-flex items-center gap-1 text-muted-foreground">
+                <MapPin className="size-4" aria-hidden />
+                {university.city}
+                {university.region ? `, ${university.region}` : ""}
+              </p>
             )}
-            {!isLive && <Badge variant="warning">Sample data</Badge>}
           </div>
-          {university.city && (
-            <p className="mt-1 inline-flex items-center gap-1 text-muted-foreground">
-              <MapPin className="size-4" aria-hidden />
-              {university.city}
-              {university.region ? `, ${university.region}` : ""}
-            </p>
-          )}
         </div>
         {university.website && (
           <Button asChild variant="outline">
@@ -76,6 +85,8 @@ export default async function UniversityPage({ params }: Params) {
           </Button>
         )}
       </header>
+
+      <UniversityGallery slug={university.slug} />
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_22rem]">
         <section>
