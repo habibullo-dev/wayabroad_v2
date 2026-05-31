@@ -35,7 +35,7 @@ export default function BlogPostPage({ params }: Params) {
   if (!post) notFound();
 
   return (
-    <article className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
+    <article className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
       <Link
         href="/blog"
         className="text-sm text-muted-foreground transition-colors hover:text-foreground"
@@ -60,7 +60,7 @@ export default function BlogPostPage({ params }: Params) {
           alt={post.title}
           fill
           priority
-          sizes="(min-width: 768px) 48rem, 100vw"
+          sizes="(min-width: 768px) 42rem, 100vw"
           className="object-cover"
         />
       </div>
