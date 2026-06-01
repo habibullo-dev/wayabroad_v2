@@ -84,6 +84,47 @@ export async function generateDocument(
   }
 }
 
+/**
+ * Stream a draft as it's generated. Yields text deltas. In mock mode (no API key) it
+ * chunks the placeholder so the live-preview UX is identical in dev/CI. Errors are thrown
+ * so the route handler can surface them to the client; this never touches persistence.
+ */
+export async function* streamDocument(
+  variables: DocVariables,
+): AsyncGenerator<string, void, unknown> {
+  if (!IS_ANTHROPIC_CONFIGURED) {
+    const text = mockDraft(variables);
+    // Emit in word-ish chunks so the client renders progressively.
+    for (const chunk of text.match(/\S+\s*/g) ?? [text]) {
+      yield chunk;
+    }
+    return;
+  }
+
+  const client = getAnthropic();
+  const stream = client.messages.stream({
+    model: MODEL,
+    max_tokens: MAX_TOKENS,
+    system: [
+      {
+        type: "text",
+        text: SYSTEM_PROMPT,
+        cache_control: { type: "ephemeral" },
+      },
+    ],
+    messages: [{ role: "user", content: buildUserMessage(variables) }],
+  });
+
+  for await (const event of stream) {
+    if (
+      event.type === "content_block_delta" &&
+      event.delta.type === "text_delta"
+    ) {
+      yield event.delta.text;
+    }
+  }
+}
+
 /** Clearly-labeled placeholder used when no Anthropic key is configured (dev/CI). */
 function mockDraft(v: DocVariables): string {
   const title = `${DOC_TYPE_LABELS[v.type]} — ${v.programName}, ${v.universityName}`;

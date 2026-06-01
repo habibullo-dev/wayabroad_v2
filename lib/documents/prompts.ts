@@ -8,6 +8,12 @@ export const DOC_TYPE_LABELS: Record<DocType, string> = {
 export const DOC_TYPES: DocType[] = ["sop", "study_plan"];
 
 /**
+ * Marker the streaming route emits before an error message. A NUL byte can't appear in the
+ * markdown body, so the client can reliably split a stream into "draft" + "error".
+ */
+export const STREAM_ERROR_SENTINEL = String.fromCharCode(0);
+
+/**
  * Large, stable system prompt — sent as a cached `system` block so it isn't re-billed on
  * every generation. Encodes role, output format, and the academic-integrity guardrails.
  */
