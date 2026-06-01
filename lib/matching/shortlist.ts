@@ -1,4 +1,5 @@
 import { KRW_PER_USD } from "@/lib/config";
+import { yearlyCostUsd } from "@/lib/data/cost";
 import type { Program, University } from "@/lib/data/types";
 
 export type MatchLevel = "high" | "medium" | "low";
@@ -143,7 +144,12 @@ export function rankPrograms(
     const university = universitiesById.get(program.university_id);
     if (!university) continue;
 
-    const estAnnualCostUsd = estimateAnnualCostUsd(program, university);
+    // Display + budget cost uses the same verified-preferring total as the university detail
+    // page (lib/data/cost), so the card can never contradict the detail; falls back to the
+    // program-level estimate when no yearly total is known.
+    const estAnnualCostUsd =
+      yearlyCostUsd(university).total ??
+      estimateAnnualCostUsd(program, university);
     const g = gpaFit(profile, program);
     const l = languageFit(profile, program);
     const f = fieldFit(profile, program);

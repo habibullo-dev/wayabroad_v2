@@ -3,21 +3,11 @@ import { BadgeCheck, ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Note } from "@/components/ui/note";
-import { COST_ESTIMATE_NOTE, KRW_PER_USD } from "@/lib/config";
+import { COST_ESTIMATE_NOTE } from "@/lib/config";
+import { yearlyCostUsd } from "@/lib/data/cost";
 import type { University } from "@/lib/data/types";
-import { fieldTrust, getVerified, type TrustLevel } from "@/lib/data/verified";
-import { formatKrw, formatUsd } from "@/lib/format";
-
-function midpoint(a: number | null, b: number | null): number | null {
-  if (a != null && b != null) return (a + b) / 2;
-  return a ?? b ?? null;
-}
-
-function sum(values: (number | null)[]): number | null {
-  const present = values.filter((v): v is number => v != null);
-  if (present.length === 0) return null;
-  return present.reduce((acc, v) => acc + v, 0);
-}
+import { type TrustLevel } from "@/lib/data/verified";
+import { formatUsd } from "@/lib/format";
 
 function TrustChip({ level }: { level: TrustLevel }) {
   if (level === "verified") {
@@ -35,86 +25,41 @@ function TrustChip({ level }: { level: TrustLevel }) {
 }
 
 export function CostBreakdown({ university }: { university: University }) {
-  const verified = getVerified(university);
-  const vt = verified?.tuition_ug ?? null;
-  const tuitionTrust: TrustLevel = vt ? fieldTrust(vt.status) : "none";
+  // Single source of truth — the shortlist/dashboard cards render the same total (lib/data/cost.ts).
+  const c = yearlyCostUsd(university);
+  const shownTrust: TrustLevel = c.tuitionTrust;
+  const krwRange = c.krwRange;
+  const sourceUrl = c.tuitionSourceUrl;
+  const verifiedOn = c.verifiedOn;
+  const tuitionIsWaiver = c.tuitionIsWaiver;
+  const useVerifiedTuition = c.tuitionTrust !== "none";
 
-  // Prefer the verified tuition figure (already per-year USD) when present; else the
-  // seed estimate (per-semester USD × 2). Living is monthly → ×12; dorm per-semester → ×2.
-  const estTuitionYear = (() => {
-    const semester = midpoint(
-      university.tuition_ug_usd_min,
-      university.tuition_ug_usd_max,
-    );
-    return semester != null ? semester * 2 : null;
-  })();
-  // Only let the overlay drive the row when it's actually displayable (verified/estimate).
-  // A `pending` (or figure-less) overlay falls back to the existing estimate columns —
-  // the methodology's hard rule: never show an unverified number as fact.
-  const useVerifiedTuition =
-    tuitionTrust !== "none" && vt?.usd_per_year != null;
-  const shownTrust: TrustLevel = useVerifiedTuition ? tuitionTrust : "none";
-  const tuitionYear = useVerifiedTuition ? vt!.usd_per_year : estTuitionYear;
-  const tuitionIsWaiver = useVerifiedTuition && tuitionYear === 0;
-
-  // Dorm + living prefer a validated overlay figure (with its source); else the seed columns.
-  const vd = verified?.dorm ?? null;
-  const useVd =
-    !!vd && fieldTrust(vd.status) !== "none" && vd.krw_per_semester != null;
-  const dormYear = useVd
-    ? Math.round((vd!.krw_per_semester! * 2) / KRW_PER_USD)
-    : university.dorm_usd_per_semester != null
-      ? university.dorm_usd_per_semester * 2
-      : null;
-
-  const vl = verified?.living ?? null;
-  const useVl =
-    !!vl && fieldTrust(vl.status) !== "none" && vl.usd_per_month != null;
-  const livingYear = useVl
-    ? vl!.usd_per_month! * 12
-    : university.living_usd_per_month != null
-      ? university.living_usd_per_month * 12
-      : null;
-
-  const krwRange =
-    useVerifiedTuition &&
-    vt!.krw_min != null &&
-    vt!.krw_max != null &&
-    vt!.krw_max > 0
-      ? vt!.krw_min === vt!.krw_max
-        ? `${formatKrw(vt!.krw_min)} / semester`
-        : `${formatKrw(vt!.krw_min)}–${formatKrw(vt!.krw_max)} / semester`
-      : null;
-  const sourceUrl = useVerifiedTuition ? vt!.source_url : null;
-  const verifiedOn = useVerifiedTuition ? vt!.verified_on : null;
-
-  const tuitionDisplay = tuitionIsWaiver ? "Free" : formatUsd(tuitionYear);
-
-  const yearlyTotal = sum([tuitionYear, dormYear, livingYear]);
+  const tuitionDisplay = tuitionIsWaiver ? "Free" : formatUsd(c.tuitionYear);
+  const yearlyTotal = c.total;
 
   const otherRows = [
     {
       label: "Dorm",
       note: "on-campus, per year",
-      value: dormYear,
-      source: useVd ? vd!.source_url : null,
+      value: c.dormYear,
+      source: c.dormSourceUrl,
     },
     {
       label: "Living",
       note: "food, transport, etc.",
-      value: livingYear,
-      source: useVl ? vl!.source_url : null,
+      value: c.livingYear,
+      source: c.livingSourceUrl,
     },
     {
       label: "Visa",
       note: "D-2, one-time",
-      value: university.visa_cost_usd,
+      value: c.visa,
       source: null,
     },
   ];
 
   // Any AI-validated overlay figures on this card? (drives the footnote)
-  const aiValidated = verified?.validated_via != null;
+  const aiValidated = c.aiValidated;
 
   return (
     <Card className="p-6">
@@ -210,7 +155,7 @@ export function CostBreakdown({ university }: { university: University }) {
       {aiValidated && (
         <p className="mt-2 text-xs text-muted-foreground">
           Some figures were validated via web search
-          {verified?.validated_on ? ` on ${verified.validated_on}` : ""} — shown
+          {c.validatedOn ? ` on ${c.validatedOn}` : ""} — shown
           as estimates with their sources; always confirm with the university.
         </p>
       )}

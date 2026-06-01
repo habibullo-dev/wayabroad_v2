@@ -16,6 +16,27 @@ function toTier(band: string | null): TierBand | undefined {
     : undefined;
 }
 
+const TIER_SELECTIVITY: Record<string, number> = {
+  elite: 0.9,
+  strong: 0.65,
+  mid: 0.4,
+  regional: 0.2,
+};
+
+/**
+ * Relative selectivity 0..1 (1 = most selective), from the university's national ranking
+ * (`kr_rank_unirank_2026`), with tier as a coarse fallback. Feeds ProgramInfo.selectivity so the
+ * engine spreads same-tier programs apart instead of returning one identical baseline.
+ */
+function toSelectivity(u: University): number | null {
+  const rank = u.kr_rank_unirank_2026;
+  if (rank != null && rank > 0) {
+    // ~50 ranked Korean universities: rank 1 ≈ most selective, rank ≥ 50 ≈ least.
+    return Math.max(0, Math.min(1, 1 - (rank - 1) / 49));
+  }
+  return u.tier_band ? (TIER_SELECTIVITY[u.tier_band] ?? null) : null;
+}
+
 /** Map a DB program + its university into the engine's ProgramInfo. */
 export function toProgramInfo(
   program: Program,
@@ -31,6 +52,7 @@ export function toProgramInfo(
     minToefl: university.english_min_toefl_ibt,
     minTopik: program.topik_required_level,
     tierBand: toTier(university.tier_band),
+    selectivity: toSelectivity(university),
   };
 }
 

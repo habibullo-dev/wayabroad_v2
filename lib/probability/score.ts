@@ -32,6 +32,12 @@ export interface ProgramInfo {
   minToefl?: number | null;
   minTopik?: number | null;
   tierBand?: TierBand;
+  /**
+   * Relative selectivity 0..1 (1 = most selective), derived from the university's national
+   * ranking. Spreads same-tier programs apart so the estimate varies per program instead of
+   * collapsing to one round number. Only used when no cited acceptance rate is available.
+   */
+  selectivity?: number | null;
 }
 
 /** A validated, cited acceptance rate for the program/university (from the data validator). */
@@ -178,7 +184,16 @@ export function scoreAdmission(
     baseRate != null && Number.isFinite(baseRate.rate) && baseRate.rate > 0;
   const base = hasValidatedRate
     ? clamp(baseRate!.rate, 0.02, 0.98)
-    : INTL_TIER_BASE[tier];
+    : program.selectivity != null
+      ? // Spread same-tier programs by real national-ranking selectivity (1 = most selective):
+        // more selective lowers the meets-the-bar baseline, less selective raises it (±0.12),
+        // so estimates vary per program instead of collapsing to one round number.
+        clamp(
+          INTL_TIER_BASE[tier] + (0.5 - program.selectivity) * 0.24,
+          0.05,
+          0.95,
+        )
+      : INTL_TIER_BASE[tier];
   if (hasValidatedRate) {
     drivers.push({
       factor: "Program selectivity",
