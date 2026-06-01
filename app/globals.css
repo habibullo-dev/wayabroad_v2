@@ -181,3 +181,209 @@
     }
   }
 }
+
+/*
+ * First-load preloader: a paper plane flies across and "writes" the WayAbroad
+ * wordmark letter-by-letter in its wake, then the overlay fades. (components/brand/preloader.tsx)
+ */
+@layer components {
+  .wa-preloader {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    background: hsl(var(--background));
+    animation: wa-fade 2.7s ease-in both;
+  }
+  .wa-stage {
+    position: relative;
+    padding: 2.5rem 2rem;
+  }
+  .wa-flightzone {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0.1em;
+    height: 1.6em;
+    pointer-events: none;
+  }
+  .wa-trail {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 0;
+    border-top: 2px dashed hsl(var(--primary) / 0.35);
+    transform: translateY(-50%);
+    animation: wa-trail 1.95s ease-out both;
+  }
+  .wa-plane {
+    position: absolute;
+    top: 50%;
+    left: -14%;
+    color: hsl(var(--primary));
+    filter: drop-shadow(0 6px 12px hsl(var(--primary) / 0.4));
+    animation: wa-fly 2s cubic-bezier(0.45, 0, 0.3, 1) both;
+  }
+  /* CSS airplane illustration (top-down), recolored to the brand royal-blue. */
+  .wa-airplane {
+    position: relative;
+    display: block;
+    width: 120px;
+    height: 120px;
+    transform: scale(0.55) rotate(-6deg);
+    transform-origin: center;
+  }
+  .wa-body {
+    position: absolute;
+    height: 10px;
+    width: 60px;
+    top: 55px;
+    left: 35px;
+    border-radius: 40px;
+    background: hsl(var(--primary));
+  }
+  .wa-body::after {
+    content: "";
+    display: block;
+    position: absolute;
+    top: -81%;
+    left: -34%;
+    height: 20px;
+    width: 25px;
+    background: transparent;
+    border-top: 8px solid hsl(var(--primary));
+    border-radius: 50px;
+    transform: rotate(87deg);
+  }
+  .wa-wing-l {
+    position: absolute;
+    top: 26px;
+    left: 56px;
+    width: 0;
+    height: 0;
+    border-bottom: 30px solid hsl(var(--primary));
+    border-right: 15px solid transparent;
+    border-top-left-radius: 8px;
+    transform: rotate(-9deg);
+  }
+  .wa-wing-l::before {
+    content: "";
+    position: absolute;
+    top: 16px;
+    left: 9px;
+    height: 8px;
+    width: 5px;
+    background: hsl(var(--primary));
+    border-radius: 20px;
+    transform: rotate(99deg);
+  }
+  .wa-wing-r {
+    position: absolute;
+    bottom: 28px;
+    left: 53px;
+    width: 0;
+    height: 0;
+    border-top: 30px solid hsl(var(--primary));
+    border-left: 15px solid transparent;
+    border-bottom-right-radius: 5px;
+    transform: rotate(20deg);
+  }
+  .wa-wing-r::before {
+    content: "";
+    position: absolute;
+    bottom: 16px;
+    left: -1px;
+    height: 8px;
+    width: 5px;
+    background: hsl(var(--primary));
+    border-radius: 20px;
+    transform: rotate(73deg);
+  }
+  .wa-word {
+    display: flex;
+    gap: 0.01em;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    font-size: clamp(2.75rem, 9vw, 4.75rem);
+    color: hsl(var(--foreground));
+  }
+  .wa-letter {
+    display: inline-block;
+    opacity: 0;
+    will-change: transform, opacity, filter;
+    animation: wa-letter 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .wa-preloader,
+    .wa-plane,
+    .wa-trail,
+    .wa-letter {
+      animation: none;
+    }
+    .wa-letter {
+      opacity: 1;
+    }
+    .wa-plane {
+      display: none;
+    }
+  }
+}
+
+@keyframes wa-fly {
+  0% {
+    left: -14%;
+    transform: translate(-50%, -50%) rotate(-2deg);
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  50% {
+    transform: translate(-50%, -50%) translateY(-26%) rotate(-6deg);
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    left: 114%;
+    transform: translate(-50%, -50%) rotate(-2deg);
+    opacity: 0;
+  }
+}
+@keyframes wa-trail {
+  0% {
+    width: 0;
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    width: 100%;
+    opacity: 1;
+  }
+}
+@keyframes wa-letter {
+  0% {
+    opacity: 0;
+    transform: translateY(0.45em) scale(0.9);
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+@keyframes wa-fade {
+  0%,
+  82% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}

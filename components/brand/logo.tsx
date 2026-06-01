@@ -1,6 +1,9 @@
 import { cn } from "@/lib/utils";
 
-/** WayAbroad wordmark: a royal-blue "W" tile with a sky-blue "destination" dot. */
+/**
+ * WayAbroad brand logo. Renders the horizontal lockup (mark + wordmark) by default,
+ * or the standalone mark when `showWordmark` is false. Assets live in /public/brand.
+ */
 export function Logo({
   className,
   showWordmark = true,
@@ -9,20 +12,18 @@ export function Logo({
   showWordmark?: boolean;
 }) {
   return (
-    <span
+    // Brand SVG embeds a raster mark; next/image would force optimization config, so a
+    // plain <img> is the simplest correct choice here.
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={showWordmark ? "/brand/wayabroad-lockup.svg" : "/brand/wayabroad-mark.svg"}
+      alt="WayAbroad"
+      draggable={false}
       className={cn(
-        "inline-flex items-center gap-2 font-display text-lg font-semibold tracking-tight text-foreground",
+        "select-none",
+        showWordmark ? "h-7 w-auto" : "size-8",
         className,
       )}
-    >
-      <span
-        aria-hidden
-        className="relative grid size-7 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground shadow-sm"
-      >
-        <span className="font-display text-sm font-bold leading-none">W</span>
-        <span className="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-brand-accent ring-2 ring-background" />
-      </span>
-      {showWordmark && <span>WayAbroad</span>}
-    </span>
+    />
   );
 }

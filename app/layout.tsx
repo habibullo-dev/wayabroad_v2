@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Fraunces, Hanken_Grotesk } from "next/font/google";
 
 import "./globals.css";
+import { Preloader } from "@/components/brand/preloader";
 import { cn } from "@/lib/utils";
 import { APP_NAME, APP_TAGLINE } from "@/lib/config";
 import { APP_URL } from "@/lib/env";
@@ -40,6 +41,7 @@ export default function RootLayout({
           "min-h-screen bg-background font-sans text-foreground antialiased",
         )}
       >
+        <Preloader />
         {children}
       </body>
     </html>
