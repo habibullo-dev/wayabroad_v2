@@ -387,3 +387,59 @@
     visibility: hidden;
   }
 }
+
+/* Homepage hero preview: the "your top matches" card rises + gently floats, its rows
+ * stagger in, and the probability bars fill — the product's magic at first glance. */
+@layer components {
+  .hp-card {
+    animation:
+      hp-rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both,
+      hp-bob 6s ease-in-out 1.4s infinite;
+  }
+  .hp-row {
+    opacity: 0;
+    animation: hp-rise 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  .hp-bar {
+    width: var(--w, 0%);
+    animation: hp-bar 0.9s cubic-bezier(0.3, 0.8, 0.3, 1) both;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hp-card,
+    .hp-row,
+    .hp-bar {
+      animation: none;
+    }
+    .hp-row {
+      opacity: 1;
+    }
+  }
+}
+
+@keyframes hp-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes hp-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+@keyframes hp-bar {
+  0% {
+    width: 0;
+  }
+  100% {
+    width: var(--w, 0%);
+  }
+}
