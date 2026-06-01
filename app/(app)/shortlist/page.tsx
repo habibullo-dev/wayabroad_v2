@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 
-import { ProgramCard } from "@/components/shortlist/program-card";
+import { MatchesExplorer } from "@/components/shortlist/matches-explorer";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DataBadge } from "@/components/ui/data-badge";
@@ -74,15 +75,9 @@ export default async function ShortlistPage() {
           .
         </Card>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {matches.map((m) => (
-            <ProgramCard
-              key={m.match.program.id}
-              match={m.match}
-              probability={m.probability}
-            />
-          ))}
-        </div>
+        <Suspense fallback={null}>
+          <MatchesExplorer matches={matches} />
+        </Suspense>
       )}
     </div>
   );
