@@ -11,6 +11,7 @@ import { UniversityMajors } from "@/components/universities/university-majors";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { getUniversityDetail } from "@/lib/data/universities";
 import { getUniversityInfo } from "@/lib/data/university-info";
 import { fieldTrust, getVerified } from "@/lib/data/verified";
@@ -134,9 +135,9 @@ export default async function UniversityPage({ params }: Params) {
                     </div>
                     <form action={startApplication} className="shrink-0">
                       <input type="hidden" name="programId" value={p.id} />
-                      <Button type="submit" size="sm">
+                      <SubmitButton size="sm" pendingText="Starting…">
                         Apply
-                      </Button>
+                      </SubmitButton>
                     </form>
                   </Card>
                 </li>

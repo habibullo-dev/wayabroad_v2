@@ -11,7 +11,7 @@ import {
 import { MatchBadge } from "@/components/shortlist/match-badge";
 import { UniversityLogo } from "@/components/universities/university-logo";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Card } from "@/components/ui/card";
 import { startApplication } from "@/lib/applications/actions";
 import { yearlyCostUsd } from "@/lib/data/cost";
@@ -179,9 +179,9 @@ export function ProgramCard({
           </Link>
           <form action={startApplication}>
             <input type="hidden" name="programId" value={program.id} />
-            <Button type="submit" size="sm">
+            <SubmitButton size="sm" pendingText="Starting…">
               Apply
-            </Button>
+            </SubmitButton>
           </form>
         </div>
       </div>
