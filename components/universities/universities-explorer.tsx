@@ -47,6 +47,7 @@ export function UniversitiesExplorer({
   const qParam = params.get("q") ?? "";
   const tier = params.get("tier") ?? "";
   const region = params.get("region") ?? "";
+  const eng = params.get("eng") ?? "";
   const sort = (params.get("sort") as SortKey) || "rank";
 
   const [search, setSearch] = React.useState(qParam);
@@ -100,6 +101,7 @@ export function UniversitiesExplorer({
       }
       if (tier && u.tier_band !== tier) return false;
       if (region && u.region !== region) return false;
+      if (eng === "english" && !u.offers_english_programs) return false;
       return true;
     });
 
@@ -125,9 +127,10 @@ export function UniversitiesExplorer({
         break;
     }
     return sorted;
-  }, [universities, debouncedSearch, tier, region, sort]);
+  }, [universities, debouncedSearch, tier, region, eng, sort]);
 
-  const hasFilters = Boolean(qParam || tier || region) || sort !== "rank";
+  const hasFilters =
+    Boolean(qParam || tier || region || eng) || sort !== "rank";
 
   const clearAll = React.useCallback(() => {
     setSearch("");
@@ -136,7 +139,7 @@ export function UniversitiesExplorer({
 
   return (
     <div>
-      <div className="mb-4 flex flex-col gap-3 rounded-xl border bg-card p-4 sm:flex-row sm:flex-wrap sm:items-end">
+      <div className="sticky top-16 z-30 mb-4 flex flex-col gap-3 rounded-xl border bg-card/95 p-4 shadow-sm backdrop-blur sm:flex-row sm:flex-wrap sm:items-end">
         <div className="flex min-w-0 flex-1 flex-col gap-1.5 sm:min-w-[14rem]">
           <label
             htmlFor="unis-search"
@@ -175,6 +178,17 @@ export function UniversitiesExplorer({
           value={region}
           onValueChange={(v) => setParam("region", v)}
           options={regionOptions}
+          className="sm:w-44"
+        />
+        <FilterSelect
+          id="unis-eng"
+          label="Programs"
+          value={eng}
+          onValueChange={(v) => setParam("eng", v)}
+          options={[
+            { value: "", label: "All programs" },
+            { value: "english", label: "English-taught" },
+          ]}
           className="sm:w-44"
         />
         <FilterSelect

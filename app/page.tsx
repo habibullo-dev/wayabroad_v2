@@ -8,6 +8,7 @@ import {
   Wallet,
 } from "lucide-react";
 
+import { CrestMarquee } from "@/components/landing/crest-marquee";
 import { AppHeader } from "@/components/layout/app-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { Badge } from "@/components/ui/badge";
@@ -71,13 +72,21 @@ const PREVIEW = [
   },
 ];
 
-const TRUST_SLUGS = [
+const MARQUEE_SLUGS = [
   "seoul-national-university",
   "korea-university",
   "yonsei-university",
   "sungkyunkwan-university-skku",
   "hanyang-university",
+  "kyung-hee-university",
   "ewha-womans-university",
+  "pusan-national-university",
+  "chung-ang-university",
+  "hankuk-university-of-foreign-studies-hufs",
+  "inha-university",
+  "konkuk-university",
+  "sejong-university",
+  "ulsan-national-institute-of-science-and-technology-unist",
 ];
 
 export default async function HomePage() {
@@ -224,15 +233,8 @@ export default async function HomePage() {
               Tracking {isLive ? counts.universities : 50} Korean universities —
               with verified, sourced data
             </p>
-            <div className="mt-5 flex flex-wrap items-center justify-center gap-x-6 gap-y-4">
-              {TRUST_SLUGS.map((slug) => (
-                <UniversityLogo
-                  key={slug}
-                  slug={slug}
-                  name={slug.replace(/-/g, " ")}
-                  className="size-12 shadow-sm"
-                />
-              ))}
+            <div className="mt-5">
+              <CrestMarquee slugs={MARQUEE_SLUGS} />
             </div>
           </div>
         </section>
