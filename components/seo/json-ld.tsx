@@ -13,7 +13,7 @@ export function JsonLd() {
         "@type": "Organization",
         name: APP_NAME,
         url: APP_URL,
-        logo: `${APP_URL}/icon.svg`,
+        logo: `${APP_URL}/icon.png`,
         sameAs: [],
       },
       {
