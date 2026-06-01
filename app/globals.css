@@ -494,3 +494,113 @@
     transform: translateX(-50%);
   }
 }
+
+/* Editorial homepage: fanned card entrance, scatter floats, hidden scrollbars. */
+@layer components {
+  .fan-card {
+    opacity: 0;
+    animation: fan-in 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  .scatter-tile {
+    opacity: 0;
+    animation: fan-in 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .fan-card,
+    .scatter-tile {
+      animation: none;
+      opacity: 1;
+    }
+  }
+}
+
+@keyframes fan-in {
+  0% {
+    opacity: 0;
+    transform: translateY(34px) scale(0.94);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Scroll-triggered reveals: motion fires AS each section enters the viewport
+   (components/landing/reveal.tsx toggles data-show via IntersectionObserver). */
+@layer components {
+  .reveal {
+    opacity: 0;
+    transition:
+      opacity 0.75s cubic-bezier(0.22, 0.61, 0.36, 1),
+      transform 0.75s cubic-bezier(0.22, 0.61, 0.36, 1);
+    will-change: opacity, transform;
+  }
+  .reveal[data-reveal="up"] {
+    transform: translateY(40px);
+  }
+  .reveal[data-reveal="left"] {
+    transform: translateX(-44px);
+  }
+  .reveal[data-reveal="right"] {
+    transform: translateX(44px);
+  }
+  .reveal[data-reveal="scale"] {
+    transform: scale(0.92);
+  }
+  .reveal[data-show="true"] {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* Probability bars hold at 0 until their card is revealed, then fill. */
+  .reveal .hp-bar {
+    animation-play-state: paused;
+  }
+  .reveal[data-show="true"] .hp-bar {
+    animation-play-state: running;
+  }
+
+  /* Scroll-linked parallax: JS sets --p (0 at top of view → 1 at bottom)
+     and elements translate by --parallax px. Pure transform, GPU-friendly. */
+  .parallax {
+    transform: translate3d(0, calc(var(--p, 0.5) * var(--parallax, 0) * 1px), 0);
+    will-change: transform;
+  }
+
+  /* Between-page transition (app/template.tsx). */
+  .page-enter {
+    animation: page-enter 0.4s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal {
+      opacity: 1 !important;
+      transform: none !important;
+      transition: none;
+    }
+    .parallax {
+      transform: none !important;
+    }
+    .page-enter {
+      animation: none;
+    }
+  }
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

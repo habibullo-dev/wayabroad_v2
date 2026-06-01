@@ -1,21 +1,25 @@
 import Link from "next/link";
 import {
   ArrowRight,
-  BadgeCheck,
   FileText,
   GraduationCap,
   Sparkles,
   Wallet,
 } from "lucide-react";
 
+import { CampusHero } from "@/components/landing/campus-hero";
 import { CrestMarquee } from "@/components/landing/crest-marquee";
+import { HeroFan } from "@/components/landing/hero-fan";
+import { MatchesPreview } from "@/components/landing/matches-preview";
+import { Reveal } from "@/components/landing/reveal";
+import { UniversityGallery } from "@/components/landing/university-gallery";
 import { AppHeader } from "@/components/layout/app-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { UniversityLogo } from "@/components/universities/university-logo";
-import { getReferenceCounts } from "@/lib/data/universities";
+import { getUniversityMedia } from "@/lib/data/university-media";
+import { getReferenceCounts, getUniversities } from "@/lib/data/universities";
 import { cn } from "@/lib/utils";
 
 const PILLARS = [
@@ -41,35 +45,12 @@ const PILLARS = [
   },
 ] as const;
 
-// A believable peek at the product — the "magic moment" rendered as a live card.
-const PREVIEW = [
-  {
-    slug: "yonsei-university",
-    uni: "Yonsei University",
-    program: "MS Computer Science",
-    band: "70–88%",
-    pct: 79,
-    cat: "Safety",
-    variant: "success" as const,
-  },
-  {
-    slug: "korea-university",
-    uni: "Korea University",
-    program: "MS Computer Science",
-    band: "62–80%",
-    pct: 71,
-    cat: "Match",
-    variant: "accent" as const,
-  },
-  {
-    slug: "seoul-national-university",
-    uni: "Seoul National",
-    program: "MS Computer Science",
-    band: "44–62%",
-    pct: 53,
-    cat: "Reach",
-    variant: "warning" as const,
-  },
+const HERO_FAN_SLUGS = [
+  "yonsei-university",
+  "korea-university",
+  "seoul-national-university",
+  "hanyang-university",
+  "ewha-womans-university",
 ];
 
 const MARQUEE_SLUGS = [
@@ -90,158 +71,114 @@ const MARQUEE_SLUGS = [
 ];
 
 export default async function HomePage() {
-  const { data: counts, source } = await getReferenceCounts();
+  const [{ data: counts, source }, { data: universities }] = await Promise.all([
+    getReferenceCounts(),
+    getUniversities(),
+  ]);
   const isLive = source === "live";
-  const dataLabel = isLive
-    ? `${counts.universities} universities · ${counts.programs} programs`
-    : "Sample data";
+  const uniCount = isLive ? counts.universities : 50;
+  const programCount = isLive ? counts.programs : 267;
+
+  const withMedia = universities
+    .map((u) => {
+      const m = getUniversityMedia(u.slug);
+      if (!m) return null;
+      return {
+        slug: u.slug,
+        name: u.name,
+        city: u.city,
+        img: m.hero?.src ?? m.logo,
+        rank: u.kr_rank_unirank_2026 ?? 999,
+      };
+    })
+    .filter((x): x is NonNullable<typeof x> => x != null)
+    .sort((a, b) => a.rank - b.rank);
+
+  const pick = (slug: string) => withMedia.find((w) => w.slug === slug);
+  const heroCards = HERO_FAN_SLUGS.map(pick).filter(
+    (x): x is NonNullable<typeof x> => x != null,
+  );
+  const campus = pick("seoul-national-university") ?? withMedia[0];
+  const gallery = withMedia.slice(0, 12);
 
   const stats = [
-    { value: isLive ? `${counts.universities}` : "50", label: "universities" },
-    { value: isLive ? `${counts.programs}` : "267", label: "programs tracked" },
+    { value: `${uniCount}`, label: "universities" },
+    { value: `${programCount}`, label: "programs tracked" },
     { value: "Free", label: "to check your odds" },
   ];
+
+  const badge = (
+    <Badge variant={isLive ? "success" : "warning"}>
+      <span
+        aria-hidden
+        className={cn(
+          "size-1.5 rounded-full",
+          isLive ? "bg-success" : "bg-warning",
+        )}
+      />
+      {isLive
+        ? `Live data · ${uniCount} universities · ${programCount} programs`
+        : "Sample data"}
+    </Badge>
+  );
 
   return (
     <div className="flex min-h-screen flex-col">
       <AppHeader />
 
       <main className="flex-1">
-        {/* Hero: copy + a live product preview */}
-        <section className="orb-glow">
-          <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:py-24">
-            <div className="flex flex-col items-start gap-6">
-              <Badge variant={isLive ? "success" : "warning"}>
-                <span
-                  aria-hidden
-                  className={cn(
-                    "size-1.5 rounded-full",
-                    isLive ? "bg-success" : "bg-warning",
-                  )}
-                />
-                {isLive ? `Live data · ${dataLabel}` : dataLabel}
-              </Badge>
-              <h1 className="font-display text-5xl font-semibold leading-[1.03] tracking-tight sm:text-6xl">
-                Get into a Korean university with{" "}
-                <span className="italic text-primary">confidence</span>.
-              </h1>
-              <p className="max-w-xl text-pretty text-lg leading-relaxed text-muted-foreground">
-                Enter your profile and see a ranked shortlist, a transparent
-                admission-probability band for each program, and ready-to-edit
-                application drafts — all built on real, sourced Korean
-                university data.
+        <HeroFan cards={heroCards} badge={badge} stats={stats} />
+
+        {/* Social proof: flowing crests */}
+        <section className="border-y border-border/60 bg-secondary/30">
+          <div className="mx-auto max-w-6xl px-4 py-7 sm:px-6">
+            <p className="mb-4 text-center text-xs font-medium uppercase tracking-widest text-muted-foreground">
+              Tracking {uniCount} Korean universities — verified, sourced data
+            </p>
+            <CrestMarquee slugs={MARQUEE_SLUGS} />
+          </div>
+        </section>
+
+        {/* The product, shown */}
+        <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:py-24">
+          <div className="grid items-center gap-12 lg:grid-cols-2">
+            <Reveal variant="left">
+              <p className="text-xs font-medium uppercase tracking-widest text-primary">
+                The product
               </p>
-              <div className="flex flex-wrap items-center gap-3">
+              <h2 className="mt-2 font-display text-3xl font-semibold tracking-tight sm:text-5xl">
+                Real odds. Not vibes.
+              </h2>
+              <p className="mt-4 max-w-md text-pretty text-lg leading-relaxed text-muted-foreground">
+                Enter your profile and every program gets a transparent
+                admission band, the drivers behind it, and a verified yearly
+                cost — so you apply where you actually have a shot.
+              </p>
+              <div className="mt-6">
                 <Button asChild size="lg">
                   <Link href="/check">
-                    Check my chances — free
+                    Try the free check
                     <ArrowRight />
                   </Link>
                 </Button>
-                <Button asChild size="lg" variant="outline">
-                  <Link href="/signup">Create account</Link>
-                </Button>
               </div>
-              <p className="text-sm text-muted-foreground">
-                No sign-up needed for the free probability check.
-              </p>
-              <dl className="mt-2 flex flex-wrap gap-x-10 gap-y-4 border-t border-border/70 pt-6">
-                {stats.map((s) => (
-                  <div key={s.label}>
-                    <dt className="sr-only">{s.label}</dt>
-                    <dd className="font-display text-2xl font-semibold tabular-nums">
-                      {s.value}
-                    </dd>
-                    <dd className="text-xs text-muted-foreground">{s.label}</dd>
-                  </div>
-                ))}
-              </dl>
-            </div>
-
-            {/* Product preview — the wow */}
-            <div className="relative mx-auto w-full max-w-md lg:mx-0 lg:max-w-none">
-              <div
-                aria-hidden
-                className="absolute -right-4 -top-4 hidden h-full w-full rounded-3xl border border-border bg-card/50 sm:block"
-              />
-              <Card className="hp-card relative overflow-hidden p-5 shadow-xl shadow-primary/10">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="flex items-center gap-2 text-sm font-semibold">
-                    <Sparkles className="size-4 text-primary" aria-hidden />
-                    Your top matches
-                  </p>
-                  <Badge variant="success">12 matched</Badge>
-                </div>
-                <ul className="mt-4 flex flex-col gap-3">
-                  {PREVIEW.map((p, i) => (
-                    <li
-                      key={p.slug}
-                      className="hp-row flex items-center gap-3 rounded-xl border border-border bg-background/70 p-3"
-                      style={{ animationDelay: `${0.2 + i * 0.13}s` }}
-                    >
-                      <UniversityLogo
-                        slug={p.slug}
-                        name={p.uni}
-                        className="size-9"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="truncate text-sm font-medium">
-                            {p.program}
-                          </p>
-                          <Badge variant={p.variant}>{p.cat}</Badge>
-                        </div>
-                        <p className="truncate text-xs text-muted-foreground">
-                          {p.uni} · {p.band}
-                        </p>
-                        <div
-                          className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-secondary"
-                          aria-hidden
-                        >
-                          <div
-                            className="hp-bar h-full rounded-full bg-primary"
-                            style={
-                              {
-                                "--w": `${p.pct}%`,
-                                animationDelay: `${0.35 + i * 0.13}s`,
-                              } as React.CSSProperties
-                            }
-                          />
-                        </div>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-                <div className="mt-4 flex items-center justify-between rounded-xl bg-secondary/60 p-3">
-                  <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <BadgeCheck className="size-3.5 text-success" aria-hidden />
-                    Verified yearly cost
-                  </p>
-                  <p className="font-display text-sm font-semibold tabular-nums">
-                    $12,422
-                  </p>
-                </div>
-              </Card>
-            </div>
+            </Reveal>
+            <MatchesPreview />
           </div>
         </section>
 
-        {/* Social proof: a wall of real crests */}
-        <section className="border-y border-border/60 bg-secondary/30">
-          <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
-            <p className="text-center text-xs font-medium uppercase tracking-widest text-muted-foreground">
-              Tracking {isLive ? counts.universities : 50} Korean universities —
-              with verified, sourced data
-            </p>
-            <div className="mt-5">
-              <CrestMarquee slugs={MARQUEE_SLUGS} />
-            </div>
-          </div>
-        </section>
+        {campus && (
+          <CampusHero img={campus.img} name={campus.name} count={uniCount} />
+        )}
+
+        <UniversityGallery universities={gallery} total={uniCount} />
 
         {/* What you get */}
-        <section id="features" className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-          <div className="mx-auto max-w-2xl text-center">
+        <section
+          id="features"
+          className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20"
+        >
+          <Reveal className="mx-auto max-w-2xl text-center">
             <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
               Everything you need to apply with clarity
             </h2>
@@ -249,28 +186,30 @@ export default async function HomePage() {
               Four tools, one honest source of truth — from first shortlist to a
               submitted application.
             </p>
-          </div>
+          </Reveal>
           <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {PILLARS.map(({ icon: Icon, title, body }) => (
-              <Card
-                key={title}
-                className="flex flex-col gap-3 p-6 transition-colors hover:border-primary/40"
-              >
-                <span className="grid size-11 place-items-center rounded-xl bg-primary/10 text-primary ring-1 ring-inset ring-primary/15">
-                  <Icon className="size-5" aria-hidden />
-                </span>
-                <h3 className="text-base font-semibold">{title}</h3>
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  {body}
-                </p>
-              </Card>
+            {PILLARS.map(({ icon: Icon, title, body }, i) => (
+              <Reveal key={title} variant="up" delay={i * 90}>
+                <Card className="flex h-full flex-col gap-3 p-6 transition-colors hover:border-primary/40">
+                  <span className="grid size-11 place-items-center rounded-xl bg-primary/10 text-primary ring-1 ring-inset ring-primary/15">
+                    <Icon className="size-5" aria-hidden />
+                  </span>
+                  <h3 className="text-base font-semibold">{title}</h3>
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    {body}
+                  </p>
+                </Card>
+              </Reveal>
             ))}
           </div>
         </section>
 
-        {/* Close — light, on-brand */}
+        {/* Close */}
         <section className="mx-auto max-w-6xl px-4 pb-24 sm:px-6">
-          <div className="orb-glow relative overflow-hidden rounded-3xl border border-primary/15 bg-gradient-to-b from-secondary/70 to-background px-6 py-16 text-center sm:py-20">
+          <Reveal
+            variant="scale"
+            className="orb-glow relative overflow-hidden rounded-3xl border border-primary/15 bg-gradient-to-b from-secondary/70 to-background px-6 py-16 text-center sm:py-20"
+          >
             <h2 className="mx-auto max-w-2xl font-display text-3xl font-semibold tracking-tight sm:text-5xl">
               Your Korean university,{" "}
               <span className="italic text-primary">within reach</span>.
@@ -290,7 +229,7 @@ export default async function HomePage() {
                 <Link href="/signup">Create a free account</Link>
               </Button>
             </div>
-          </div>
+          </Reveal>
         </section>
       </main>
 
